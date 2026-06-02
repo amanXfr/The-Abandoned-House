@@ -1,6 +1,6 @@
-- 👋 Hi, I’m @lazzyboy06
-- 👀 I’m interested in ... Ms word project power point grapic desing
-- 🌱 I’m currently learning ... Computer science
+- 👋 Hi, I’m Aman
+- 👀 I’m interested in Ms word project power point grapic desing
+- 🌱 I’m currently learning BCA (Data Science And Ai) From Amity Kolkata
 - 💞️ I’m looking to collaborate on
 - 📫 How to reach me ...amanhossain610@gmail.com 
 
