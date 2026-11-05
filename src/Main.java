@@ -1049,6 +1049,82 @@ class GameScreen extends JPanel {
         m.dispose();
     }
 
+    // ================= COLLISION DEBUG OVERLAY =================
+
+    private void drawCollisionOverlay(Graphics2D g2) {
+        // Thin cyan outlines show the exact rectangular areas that block movement.
+        // These coordinates intentionally match the collision zones in collides().
+        Rectangle2D.Double[] blockedAreas = {
+            // Library furniture.
+            new Rectangle2D.Double(42, 48, 235, 92),
+            new Rectangle2D.Double(112, 190, 132, 48),
+            new Rectangle2D.Double(145, 150, 58, 40),
+            new Rectangle2D.Double(43, 235, 34, 48),
+
+            // Grand staircase and foyer table.
+            new Rectangle2D.Double(340, 0, 220, 82),
+            new Rectangle2D.Double(405, 245, 92, 72),
+
+            // Dining room.
+            new Rectangle2D.Double(625, 128, 205, 112),
+
+            // Living room.
+            new Rectangle2D.Double(45, 258, 260, 92),
+            new Rectangle2D.Double(142, 360, 112, 68),
+            new Rectangle2D.Double(78, 405, 62, 48),
+            new Rectangle2D.Double(230, 405, 62, 48),
+
+            // Kitchen.
+            new Rectangle2D.Double(655, 270, 215, 72),
+            new Rectangle2D.Double(700, 372, 125, 62),
+
+            // Bathroom.
+            new Rectangle2D.Double(68, 432, 175, 65),
+            new Rectangle2D.Double(95, 505, 100, 52),
+            new Rectangle2D.Double(205, 505, 45, 38),
+
+            // Bedroom.
+            new Rectangle2D.Double(680, 445, 72, 105),
+            new Rectangle2D.Double(755, 455, 115, 112),
+            new Rectangle2D.Double(650, 475, 30, 55),
+            new Rectangle2D.Double(865, 475, 25, 55),
+
+            // Planters.
+            new Rectangle2D.Double(298, 270, 28, 35),
+            new Rectangle2D.Double(574, 270, 28, 35),
+            new Rectangle2D.Double(298, 455, 28, 35),
+            new Rectangle2D.Double(574, 455, 28, 35),
+
+            // Room walls.
+            new Rectangle2D.Double(25, 215, 8, 25),
+            new Rectangle2D.Double(25, 240, 8, 120),
+            new Rectangle2D.Double(25, 360, 8, 28),
+            new Rectangle2D.Double(25, 388, 8, 125),
+            new Rectangle2D.Double(25, 513, 8, 70),
+            new Rectangle2D.Double(590, 235, 9, 110),
+            new Rectangle2D.Double(590, 345, 9, 38),
+            new Rectangle2D.Double(590, 383, 9, 130),
+            new Rectangle2D.Double(80, 420, 240, 8),
+            new Rectangle2D.Double(80, 420, 8, 25),
+            new Rectangle2D.Double(250, 420, 70, 8),
+            new Rectangle2D.Double(610, 420, 270, 8)
+        };
+
+        Stroke oldStroke = g2.getStroke();
+        g2.setStroke(new BasicStroke(1.2f));
+        g2.setColor(new Color(30, 235, 255, 190));
+        for (Rectangle2D.Double area : blockedAreas) {
+            g2.draw(area);
+        }
+
+        // The outer movement boundary is shown as a fine dotted guide.
+        g2.setColor(new Color(255, 220, 70, 170));
+        g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
+            BasicStroke.JOIN_MITER, 10.0f, new float[]{4.0f, 4.0f}, 0.0f));
+        g2.drawRect(6, 6, 888, 588);
+        g2.setStroke(oldStroke);
+    }
+
     // ================= FLASHLIGHT =================
 
     private void drawDarkness(Graphics2D g2) {
@@ -1159,6 +1235,7 @@ class GameScreen extends JPanel {
         drawKey(g2);
         drawMonster(g2);
         drawDarkness(g2);
+        drawCollisionOverlay(g2);
         drawPlayer(g2);
 
         // HUD
