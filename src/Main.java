@@ -666,7 +666,7 @@ class GameScreen extends JPanel {
 
     private Shape[] getAnnotatedWallShapes() {
         if (cachedAnnotatedWallShapes == null) {
-            cachedAnnotatedWallShapes = buildAnnotatedShapes(ANNOTATED_WALL_PATHS, 9.0f);
+            cachedAnnotatedWallShapes = buildAnnotatedShapes(ANNOTATED_WALL_PATHS, 14.0f);
         }
         return cachedAnnotatedWallShapes;
     }
@@ -678,15 +678,61 @@ class GameScreen extends JPanel {
         return cachedAnnotatedFurnitureShapes;
     }
 
-    // Interior collision barriers are disabled for free exploration.
+    // Wall collision is stored as a grid of small joined square cells.
+    // The cells are invisible: they only define where characters can walk.
+    private static final int WALL_CELL_SIZE = 8;
+    private boolean[][] wallGrid;
+
+    private boolean[][] getWallGrid() {
+        if (wallGrid == null) {
+            int columns = (900 + WALL_CELL_SIZE - 1) / WALL_CELL_SIZE;
+            int rows = (600 + WALL_CELL_SIZE - 1) / WALL_CELL_SIZE;
+            wallGrid = new boolean[rows][columns];
+
+            Shape[] wallShapes = getAnnotatedWallShapes();
+            for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < columns; col++) {
+                    Rectangle2D cell = new Rectangle2D.Double(
+                        col * WALL_CELL_SIZE,
+                        row * WALL_CELL_SIZE,
+                        WALL_CELL_SIZE,
+                        WALL_CELL_SIZE
+                    );
+
+                    for (Shape wall : wallShapes) {
+                        if (wall.intersects(cell)) {
+                            wallGrid[row][col] = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return wallGrid;
+    }
+
     private boolean collides(double x, double y, int size) {
-        return x - size < 6 || y - size < 6 ||
-               x + size > 894 || y + size > 594;
+        if (x - size < 6 || y - size < 6 ||
+            x + size > 894 || y + size > 594) return true;
+
+        boolean[][] grid = getWallGrid();
+        int minCol = Math.max(0, (int) Math.floor((x - size) / WALL_CELL_SIZE));
+        int maxCol = Math.min(grid[0].length - 1,
+            (int) Math.floor((x + size) / WALL_CELL_SIZE));
+        int minRow = Math.max(0, (int) Math.floor((y - size) / WALL_CELL_SIZE));
+        int maxRow = Math.min(grid.length - 1,
+            (int) Math.floor((y + size) / WALL_CELL_SIZE));
+
+        for (int row = minRow; row <= maxRow; row++) {
+            for (int col = minCol; col <= maxCol; col++) {
+                if (grid[row][col]) return true;
+            }
+        }
+        return false;
     }
 
     private boolean monsterHitsWall(double x, double y, int size) {
-        return x - size < 6 || y - size < 6 ||
-               x + size > 894 || y + size > 594;
+        return collides(x, y, size);
     }
 
     private boolean isWall(int x, int y) {
