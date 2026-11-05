@@ -678,39 +678,15 @@ class GameScreen extends JPanel {
         return cachedAnnotatedFurnitureShapes;
     }
 
+    // Interior collision barriers are disabled for free exploration.
     private boolean collides(double x, double y, int size) {
-        if (x - size < 6 || y - size < 6 ||
-            x + size > 894 || y + size > 594) {
-            return true;
-        }
-
-        Rectangle2D.Double playerBox =
-            new Rectangle2D.Double(x - size, y - size, size * 2.0, size * 2.0);
-
-        for (Shape wall : getAnnotatedWallShapes()) {
-            if (wall.intersects(playerBox)) return true;
-        }
-        for (Shape furniture : getAnnotatedFurnitureShapes()) {
-            if (furniture.intersects(playerBox)) return true;
-        }
-        return false;
+        return x - size < 6 || y - size < 6 ||
+               x + size > 894 || y + size > 594;
     }
 
-    // Monster uses architectural walls only. It can squeeze around room furniture
-    // instead of becoming trapped against a sofa, counter, table or decorative prop.
     private boolean monsterHitsWall(double x, double y, int size) {
-        if (x - size < 6 || y - size < 6 ||
-            x + size > 894 || y + size > 594) {
-            return true;
-        }
-
-        Rectangle2D.Double monsterBox =
-            new Rectangle2D.Double(x - size, y - size, size * 2.0, size * 2.0);
-
-        for (Shape wall : getAnnotatedWallShapes()) {
-            if (wall.intersects(monsterBox)) return true;
-        }
-        return false;
+        return x - size < 6 || y - size < 6 ||
+               x + size > 894 || y + size > 594;
     }
 
     private boolean isWall(int x, int y) {
@@ -1301,7 +1277,6 @@ class GameScreen extends JPanel {
         drawKey(g2);
         drawMonster(g2);
         drawDarkness(g2);
-        drawCollisionOverlay(g2);
         drawPlayer(g2);
 
         // HUD
