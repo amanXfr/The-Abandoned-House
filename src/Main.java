@@ -203,6 +203,9 @@ class GameScreen extends JPanel {
     // Flashlight
     private boolean flashlightOn = true;
     private boolean fPressed = false;
+    // Developer cheat: bypass the darkness overlay for testing.
+    private boolean developerFullBrightness = false;
+    private JButton brightnessButton;
 
     // Golden key
     private boolean hasKey = false;
@@ -243,6 +246,26 @@ class GameScreen extends JPanel {
 
         setBackground(Color.BLACK);
         setFocusable(true);
+        setLayout(null);
+
+        // Developer-only on-screen brightness toggle.
+        brightnessButton = new JButton("FULL BRIGHT: OFF");
+        brightnessButton.setFont(new Font("Arial", Font.BOLD, 12));
+        brightnessButton.setForeground(new Color(255, 235, 190));
+        brightnessButton.setBackground(new Color(55, 42, 25));
+        brightnessButton.setFocusPainted(false);
+        brightnessButton.setBorder(BorderFactory.createLineBorder(new Color(205, 160, 75), 2));
+        brightnessButton.setOpaque(true);
+        brightnessButton.setToolTipText("Developer toggle: reveal the entire villa map");
+        brightnessButton.addActionListener(e -> {
+            developerFullBrightness = !developerFullBrightness;
+            brightnessButton.setText(developerFullBrightness ? "FULL BRIGHT: ON" : "FULL BRIGHT: OFF");
+            brightnessButton.setBackground(developerFullBrightness
+                ? new Color(105, 80, 25) : new Color(55, 42, 25));
+            repaint();
+            requestFocusInWindow();
+        });
+        add(brightnessButton);
 
         createMap();
         setupControls();
@@ -255,6 +278,14 @@ class GameScreen extends JPanel {
         });
 
         gameTimer.start();
+    }
+
+    @Override
+    public void doLayout() {
+        super.doLayout();
+        if (brightnessButton != null) {
+            brightnessButton.setBounds(Math.max(12, getWidth() - 190), 52, 178, 34);
+        }
     }
 
     // ================= HOUSE MAP =================
@@ -944,6 +975,9 @@ class GameScreen extends JPanel {
     // ================= FLASHLIGHT =================
 
     private void drawDarkness(Graphics2D g2) {
+
+        // Developer full-bright mode disables all darkness and flashlight masking.
+        if (developerFullBrightness) return;
 
         if (!flashlightOn) {
 
