@@ -9,6 +9,10 @@ import java.util.Set;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import javax.imageio.ImageIO;
 
 public class Main {
@@ -208,6 +212,17 @@ class GameScreen extends JPanel {
     private boolean developerFullBrightness = false;
     private JButton brightnessButton;
 
+    // Temporary in-game wall editor. Drawn walls are saved locally in assets/custom-wall-layout.txt.
+    private JButton drawWallsButton;
+    private JButton undoWallButton;
+    private boolean wallDrawMode = false;
+    private final ArrayList<String> customWallPathData = new ArrayList<>();
+    private final ArrayList<Shape> customWallShapes = new ArrayList<>();
+    private Path2D.Double currentWallPath;
+    private StringBuilder currentWallData;
+    private static final String CUSTOM_WALL_FILE = "assets/custom-wall-layout.txt";
+    private static final float CUSTOM_WALL_THICKNESS = 9.0f;
+
     // Golden key
     private boolean hasKey = false;
     private boolean keyCollected = false;
@@ -270,6 +285,29 @@ class GameScreen extends JPanel {
         });
         add(brightnessButton);
 
+        // Temporary tool: enable it, then left-click and drag on the map to draw walls.
+        drawWallsButton = new JButton("DRAW WALLS: OFF");
+        styleToolButton(drawWallsButton);
+        drawWallsButton.setToolTipText("Enable, then left-drag on the villa to draw blocking walls");
+        drawWallsButton.addActionListener(e -> {
+            wallDrawMode = !wallDrawMode;
+            drawWallsButton.setText(wallDrawMode ? "DRAW WALLS: ON" : "DRAW WALLS: OFF");
+            drawWallsButton.setBackground(wallDrawMode
+                ? new Color(125, 48, 35) : new Color(55, 42, 25));
+            requestFocusInWindow();
+            repaint();
+        });
+        add(drawWallsButton);
+
+        // Remove the most recently drawn wall if you make a mistake.
+        undoWallButton = new JButton("UNDO WALL");
+        styleToolButton(undoWallButton);
+        undoWallButton.addActionListener(e -> undoLastCustomWall());
+        add(undoWallButton);
+
+        loadCustomWallLayout();
+        setupWallDrawingMouseControls();
+
         createMap();
         setupControls();
 
@@ -288,6 +326,12 @@ class GameScreen extends JPanel {
         super.doLayout();
         if (brightnessButton != null) {
             brightnessButton.setBounds(Math.max(12, getWidth() - 190), 52, 178, 34);
+        }
+        if (drawWallsButton != null) {
+            drawWallsButton.setBounds(Math.max(12, getWidth() - 376), 52, 178, 34);
+        }
+        if (undoWallButton != null) {
+            undoWallButton.setBounds(Math.max(12, getWidth() - 562), 52, 178, 34);
         }
     }
 
@@ -689,54 +733,19 @@ class GameScreen extends JPanel {
             int rows = (600 + WALL_CELL_SIZE - 1) / WALL_CELL_SIZE;
             wallGrid = new boolean[rows][columns];
 
-            // Thin wall strips follow only the visible architectural partitions.
-            // Openings are deliberately left at each doorway.
-            Rectangle2D.Double[] walls = {
-                // Library outer wall and its lower divider.
-                new Rectangle2D.Double(29, 42, 4, 174),
-                new Rectangle2D.Double(29, 42, 274, 4),
-                new Rectangle2D.Double(29, 216, 104, 4),
-                new Rectangle2D.Double(210, 216, 104, 4),
-
-                // Living-room left boundary and lower wall, with the hall opening.
-                new Rectangle2D.Double(29, 232, 4, 173),
-                new Rectangle2D.Double(29, 405, 108, 4),
-                new Rectangle2D.Double(225, 405, 89, 4),
-                new Rectangle2D.Double(315, 232, 4, 54),
-                new Rectangle2D.Double(315, 336, 4, 69),
-
-                // Bathroom perimeter; doorway at the top-right remains open.
-                new Rectangle2D.Double(85, 420, 4, 138),
-                new Rectangle2D.Double(85, 558, 164, 4),
-                new Rectangle2D.Double(245, 420, 4, 138),
-
-                // Left side of the central hall: short wall returns only.
-                new Rectangle2D.Double(320, 216, 4, 62),
-                new Rectangle2D.Double(320, 337, 4, 68),
-
-                // Right side of the central hall: short wall returns only.
-                new Rectangle2D.Double(575, 216, 4, 65),
-                new Rectangle2D.Double(575, 337, 4, 68),
-
-                // Dining / kitchen wing, leaving the door and passage gaps clear.
-                new Rectangle2D.Double(585, 232, 4, 70),
-                new Rectangle2D.Double(585, 350, 4, 55),
-                new Rectangle2D.Double(590, 405, 123, 4),
-                new Rectangle2D.Double(790, 405, 88, 4),
-                new Rectangle2D.Double(875, 232, 4, 173),
-
-                // Lower-right bedroom boundary and doorway opening.
-                new Rectangle2D.Double(585, 420, 4, 138),
-                new Rectangle2D.Double(585, 558, 284, 4),
-                new Rectangle2D.Double(870, 420, 4, 138)
-            };
+            ArrayList<Shape> activeWalls = new ArrayList<>(customWallShapes);
+            if (currentWallPath != null) {
+                activeWalls.add(new BasicStroke(CUSTOM_WALL_THICKNESS,
+                    BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+                    .createStrokedShape(currentWallPath));
+            }
 
             for (int row = 0; row < rows; row++) {
                 for (int col = 0; col < columns; col++) {
                     Rectangle2D cell = new Rectangle2D.Double(
                         col * WALL_CELL_SIZE, row * WALL_CELL_SIZE,
                         WALL_CELL_SIZE, WALL_CELL_SIZE);
-                    for (Rectangle2D.Double wall : walls) {
+                    for (Shape wall : activeWalls) {
                         if (wall.intersects(cell)) {
                             wallGrid[row][col] = true;
                             break;
@@ -1211,8 +1220,8 @@ class GameScreen extends JPanel {
         boolean[][] grid = getWallGrid();
         Stroke oldStroke = g2.getStroke();
 
-        // Show every occupied 8x8 collision cell as a small translucent square.
-        g2.setColor(new Color(255, 75, 45, 105));
+        // The red 8x8 cells now come only from walls drawn by the developer.
+        g2.setColor(new Color(255, 75, 45, 115));
         for (int row = 0; row < grid.length; row++) {
             for (int col = 0; col < grid[row].length; col++) {
                 if (grid[row][col]) {
@@ -1222,8 +1231,7 @@ class GameScreen extends JPanel {
             }
         }
 
-        // Fine cell grid makes the individual joined squares easy to inspect.
-        g2.setColor(new Color(255, 190, 150, 125));
+        g2.setColor(new Color(255, 205, 175, 150));
         g2.setStroke(new BasicStroke(0.45f));
         for (int row = 0; row < grid.length; row++) {
             for (int col = 0; col < grid[row].length; col++) {
@@ -1233,7 +1241,155 @@ class GameScreen extends JPanel {
                 }
             }
         }
+
+        if (wallDrawMode) {
+            g2.setColor(new Color(255, 245, 210));
+            g2.setFont(new Font("Arial", Font.BOLD, 12));
+            g2.drawString("DRAW MODE: LEFT-DRAG TO TRACE WALLS  |  UNDO WALL TO REMOVE LAST", 18, 82);
+        }
         g2.setStroke(oldStroke);
+    }
+
+
+    private void styleToolButton(JButton button) {
+        button.setFont(new Font("Arial", Font.BOLD, 11));
+        button.setForeground(new Color(255, 235, 190));
+        button.setBackground(new Color(55, 42, 25));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(new Color(205, 160, 75), 2));
+        button.setOpaque(true);
+    }
+
+    private Point2D.Double mouseToMapPoint(MouseEvent event) {
+        double x = event.getX() * 900.0 / Math.max(1, getWidth());
+        double y = event.getY() * 600.0 / Math.max(1, getHeight());
+        return new Point2D.Double(
+            Math.max(0, Math.min(900, x)),
+            Math.max(0, Math.min(600, y))
+        );
+    }
+
+    private void setupWallDrawingMouseControls() {
+        MouseAdapter drawingAdapter = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent event) {
+                if (!wallDrawMode || !SwingUtilities.isLeftMouseButton(event)) return;
+                Point2D.Double point = mouseToMapPoint(event);
+                if (point.y < 42) return; // Keep the title/toolbar area clear.
+
+                currentWallPath = new Path2D.Double();
+                currentWallPath.moveTo(point.x, point.y);
+                currentWallData = new StringBuilder();
+                currentWallData.append(Math.round(point.x)).append(",").append(Math.round(point.y));
+                wallGrid = null;
+                repaint();
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent event) {
+                if (!wallDrawMode || currentWallPath == null ||
+                    (event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == 0) return;
+
+                Point2D.Double point = mouseToMapPoint(event);
+                if (point.y < 42) return;
+
+                currentWallPath.lineTo(point.x, point.y);
+                currentWallData.append(" ")
+                    .append(Math.round(point.x)).append(",").append(Math.round(point.y));
+                wallGrid = null;
+                repaint();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent event) {
+                if (currentWallPath == null) return;
+
+                if (currentWallData != null && currentWallData.indexOf(" ") >= 0) {
+                    customWallPathData.add(currentWallData.toString());
+                    customWallShapes.add(new BasicStroke(CUSTOM_WALL_THICKNESS,
+                        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+                        .createStrokedShape(currentWallPath));
+                    saveCustomWallLayout();
+                }
+
+                currentWallPath = null;
+                currentWallData = null;
+                wallGrid = null;
+                repaint();
+            }
+        };
+
+        addMouseListener(drawingAdapter);
+        addMouseMotionListener(drawingAdapter);
+    }
+
+    private Path2D.Double decodeWallPath(String encoded) {
+        Path2D.Double path = new Path2D.Double();
+        String[] points = encoded.trim().split("\\s+");
+        boolean first = true;
+
+        for (String point : points) {
+            String[] xy = point.split(",");
+            if (xy.length != 2) continue;
+            double x = Double.parseDouble(xy[0]);
+            double y = Double.parseDouble(xy[1]);
+            if (first) {
+                path.moveTo(x, y);
+                first = false;
+            } else {
+                path.lineTo(x, y);
+            }
+        }
+        return path;
+    }
+
+    private void loadCustomWallLayout() {
+        File file = new File(CUSTOM_WALL_FILE);
+        if (!file.isFile()) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+                Path2D.Double path = decodeWallPath(line);
+                customWallPathData.add(line.trim());
+                customWallShapes.add(new BasicStroke(CUSTOM_WALL_THICKNESS,
+                    BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+                    .createStrokedShape(path));
+            }
+        } catch (IOException | NumberFormatException ex) {
+            System.out.println("Could not load custom walls: " + ex.getMessage());
+        }
+        wallGrid = null;
+    }
+
+    private void saveCustomWallLayout() {
+        File file = new File(CUSTOM_WALL_FILE);
+        File parent = file.getParentFile();
+        if (parent != null) parent.mkdirs();
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+            for (String path : customWallPathData) writer.println(path);
+            System.out.println("Saved wall layout to " + file.getAbsolutePath());
+        } catch (IOException ex) {
+            System.out.println("Could not save custom walls: " + ex.getMessage());
+            message = "Could not save wall layout. Check the assets folder.";
+        }
+    }
+
+    private void undoLastCustomWall() {
+        if (!customWallPathData.isEmpty()) {
+            customWallPathData.remove(customWallPathData.size() - 1);
+            customWallShapes.remove(customWallShapes.size() - 1);
+            wallGrid = null;
+            saveCustomWallLayout();
+            message = "Last custom wall removed.";
+            repaint();
+        } else {
+            message = "There are no custom walls to undo.";
+            repaint();
+        }
+        requestFocusInWindow();
     }
 
     private void drawEncodedPath(Graphics2D g2, String encoded) {
