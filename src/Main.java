@@ -534,131 +534,139 @@ class GameScreen extends JPanel {
     // ================= COLLISION =================
 
     // One source of truth for collision and the visible developer outlines.
-    private Rectangle2D.Double[] getBlockedAreas() {
-        return new Rectangle2D.Double[] {
-            // Library: tight footprints around the bookcase, desk and chair.
-            new Rectangle2D.Double(96, 55, 184, 68),
-            new Rectangle2D.Double(150, 136, 86, 34),
-            new Rectangle2D.Double(171, 113, 36, 21),
-            new Rectangle2D.Double(73, 164, 17, 25),
+    // Traced from the user's annotated floor-plan screenshot, normalized to 900x600.
+    // Each string is a polyline: x,y pairs separated by spaces.
+    private static final String[] ANNOTATED_WALL_PATHS = {
+        "49,239 49,330 53,332 53,358 72,357 71,336 74,330 169,330 177,333 178,331 189,330 326,330 326,238",
+        "594,55 594,128 845,129 848,127 847,55",
+        "90,439 90,504 224,505 235,503 234,437 91,437",
+        "416,283 416,355 483,355 483,284 445,282",
+        "62,54 64,147 87,147 88,143 169,142 89,141 88,65 90,61 92,61 92,63 93,61 92,58 89,57 88,52 128,50 278,52 278,141 205,142 206,143 278,143 278,117 280,111 282,143 282,59 304,58 306,145 281,146 306,147 307,71 305,56 282,56 280,70 278,50 88,50 87,52 63,52",
+        "584,269 583,344 623,345 624,269",
+        "746,439 747,492 796,492 798,472 797,439",
+        "648,442 647,510 676,510 678,512 678,537 741,537 741,497 740,536 680,535 678,517 678,445 680,443 740,443 741,495 743,443 741,441",
+        "321,442 320,511 344,512 347,508 347,444 345,442",
+        "500,44 498,73 499,87 514,86 530,88 531,161 533,159 531,158 530,82 533,76 538,76 539,74 538,72 531,71 531,48 571,47 573,49 574,158 558,159 558,161 574,160 574,46 545,45 540,47 530,44",
+        "326,45 326,160 344,161 344,159 326,158 327,48 345,45 375,47 376,158 370,159 370,161 376,160 376,85 402,84 402,48 378,48 376,45 372,44",
+        "72,162 73,208 97,208 97,162",
+        "53,378 52,416 67,416 67,379",
+        "839,267 776,265 684,266 683,346 813,345 684,345 683,269 685,267 836,267 838,270 838,295",
+        "354,419 354,571 90,582 88,556 87,433 89,581 87,583 81,583 259,575 300,575 310,573 316,575 353,574 355,577 357,572 363,571 355,570",
+        "854,66 860,423 856,98",
+        "40,214 40,427 281,425 40,426 41,213",
+        "804,567 686,571 622,571 575,574 534,574 510,569 495,569 495,571 551,575",
+        "55,50 53,54 53,225",
+        "234,227 71,230 160,230",
+        "372,283 346,283 346,334 349,335 350,333 347,331 347,285 373,284",
+        "552,438 551,517 566,517 553,517 551,515 551,442 553,439 617,440 617,515 614,517 617,517 617,438",
+        "257,441 256,517 284,518 285,517 258,517 256,513 257,444 285,442",
+        "809,476 811,546 811,496",
+        "838,317 838,344 819,344 818,346 838,345",
+        "173,142 200,143 190,141",
+        "349,159 349,161 366,160",
+        "750,359 756,361 761,359",
+        "219,158 219,167 221,162",
+        "182,119 192,120 188,118",
+        "357,103 355,107 358,108",
+        "357,117 355,120 358,120",
+        "373,289 373,330 371,333 355,333 373,333",
+        "729,160 729,163 731,163",
+        "544,118 543,120 545,122",
+        "721,359 719,359 719,407 719,360",
+        "812,548 812,564",
+        "358,538 404,538",
+        "494,532 535,533",
+        "571,517 609,517",
+        "117,515 161,515",
+        "809,435 809,473",
+        "539,433 541,571",
+        "322,435 345,433",
+        "610,427 540,428",
+        "842,427 654,428",
+        "781,359 793,359",
+        "763,359 773,359",
+        "739,359 747,359",
+        "116,339 131,339",
+        "838,301 838,314",
+        "340,298 341,353",
+        "657,254 741,255",
+        "846,252 787,253",
+        "575,235 574,349",
+        "340,225 340,296",
+        "332,224 324,225",
+        "244,224 304,225",
+        "537,159 554,159",
+        "144,150 143,203",
+        "535,115 539,118",
+        "585,50 586,165",
+        "313,49 314,181"
+    };
 
-            // Staircase side posts only; leave the stair treads and landing open.
-            new Rectangle2D.Double(352, 58, 17, 82),
-            new Rectangle2D.Double(531, 58, 17, 82),
+    private static final String[] ANNOTATED_FURNITURE_PATHS = {
+        "651,144 651,221 802,221 802,144",
+        "170,112 170,150 163,152 146,152 146,203 239,204 240,152 206,152 203,149 204,112",
+        "411,535 412,599 485,599 484,534 413,533",
+        "716,357 715,386 717,410 798,409 798,356",
+        "569,462 569,528 610,529 612,527 611,462",
+        "100,336 99,405 134,405 134,336",
+        "112,511 113,552 170,552 170,511",
+        "236,341 234,343 235,402 271,402 271,341",
+        "155,362 156,400 213,399 212,361",
+        "527,280 526,330 557,331 559,298 558,281",
+        "369,465 368,520 397,521 397,465",
+        "816,297 814,315 815,355 824,357 840,356 841,298",
+        "502,470 502,519 529,520 530,471",
+        "352,286 351,335 374,336 376,335 376,286",
+        "346,129 346,174 367,174 368,129",
+        "535,131 534,175 556,176 556,132",
+        "267,303 267,313 275,314 275,303",
+        "97,303 97,312 105,313 104,303",
+        "83,303 83,313 91,313 90,303 88,303 86,307",
+        "268,285 267,296 272,297 273,289 271,285",
+        "258,284 255,286 256,296 260,297 260,285",
+        "97,285 97,296 100,297 102,295 102,289 100,285",
+        "260,303 254,303 254,306 252,307 254,313 260,308",
+        "87,285 89,297 91,295 91,286",
+        "267,265 267,276 269,277 269,267",
+        "260,264 258,276 261,275",
+        "778,468 777,474 780,474",
+        "97,266 96,275 98,275",
+        "91,267 89,276 91,275",
+        "333,277 334,292"
+    };
 
-            // Foyer centre table and nearby planters.
-            new Rectangle2D.Double(420, 252, 64, 55),
-            new Rectangle2D.Double(333, 276, 15, 21),
-            new Rectangle2D.Double(553, 276, 15, 21),
-            new Rectangle2D.Double(333, 460, 15, 21),
-            new Rectangle2D.Double(553, 460, 15, 21),
+    private Shape[] buildAnnotatedShapes(String[] encodedPaths, float strokeWidth) {
+        ArrayList<Shape> shapes = new ArrayList<>();
+        BasicStroke collisionStroke = new BasicStroke(strokeWidth,
+            BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
-            // Dining table and chair footprint, leaving the room entrance clear.
-            new Rectangle2D.Double(650, 145, 165, 70),
-
-            // Living room fireplace surround, coffee table and sofas.
-            new Rectangle2D.Double(105, 250, 180, 25),
-            new Rectangle2D.Double(151, 361, 93, 34),
-            new Rectangle2D.Double(99, 341, 34, 47),
-            new Rectangle2D.Double(239, 341, 34, 47),
-
-            // Kitchen back counter and island; doorway on the left stays open.
-            new Rectangle2D.Double(692, 276, 160, 38),
-            new Rectangle2D.Double(731, 365, 83, 27),
-
-            // Bathroom vanity, bath and toilet.
-            new Rectangle2D.Double(112, 451, 112, 28),
-            new Rectangle2D.Double(112, 520, 65, 23),
-            new Rectangle2D.Double(224, 511, 16, 20),
-
-            // Bedroom wardrobe, bed and bedside tables.
-            new Rectangle2D.Double(687, 463, 37, 55),
-            new Rectangle2D.Double(761, 472, 94, 70),
-            new Rectangle2D.Double(658, 490, 13, 27),
-            new Rectangle2D.Double(867, 490, 13, 27)
-        };
+        for (String encoded : encodedPaths) {
+            String[] points = encoded.trim().split("\\s+");
+            Path2D.Double path = new Path2D.Double();
+            boolean first = true;
+            for (String point : points) {
+                String[] xy = point.split(",");
+                double px = Double.parseDouble(xy[0]);
+                double py = Double.parseDouble(xy[1]);
+                if (first) {
+                    path.moveTo(px, py);
+                    first = false;
+                } else {
+                    path.lineTo(px, py);
+                }
+            }
+            path.closePath();
+            shapes.add(collisionStroke.createStrokedShape(path));
+        }
+        return shapes.toArray(new Shape[0]);
     }
 
-    // Red-marked architectural boundaries from the user's annotated floor plan.
-    // Door gaps are deliberately omitted so the green-marked passages stay open.
-    private Rectangle2D.Double[] getWallAreas() {
-        return new Rectangle2D.Double[] {
-            // Library outer walls and lower partition.
-            new Rectangle2D.Double(62, 66, 248, 4),
-            new Rectangle2D.Double(62, 66, 4, 139),
-            new Rectangle2D.Double(62, 205, 4, 2),
-            new Rectangle2D.Double(62, 205, 245, 4),
-            new Rectangle2D.Double(306, 66, 4, 105),
-            new Rectangle2D.Double(306, 66, 4, 105),
-
-            // Central stair hall side walls; keep the foyer opening clear.
-            new Rectangle2D.Double(326, 62, 4, 104),
-            new Rectangle2D.Double(326, 62, 4, 104),
-            new Rectangle2D.Double(574, 62, 4, 105),
-            new Rectangle2D.Double(574, 62, 4, 105),
-
-            // Dining room perimeter and fireplace wall.
-            new Rectangle2D.Double(594, 67, 254, 4),
-            new Rectangle2D.Double(594, 67, 4, 98),
-            new Rectangle2D.Double(844, 67, 4, 98),
-            new Rectangle2D.Double(594, 141, 254, 4),
-            new Rectangle2D.Double(594, 141, 4, 22),
-
-            // Living room: left wall, fireplace wall and lower partition.
-            new Rectangle2D.Double(28, 245, 4, 152),
-            new Rectangle2D.Double(28, 245, 290, 4),
-            new Rectangle2D.Double(28, 397, 290, 4),
-            new Rectangle2D.Double(28, 397, 4, 18),
-            new Rectangle2D.Double(28, 415, 4, 18),
-
-            // Living room right boundary; doorway gap retained near foyer.
-            new Rectangle2D.Double(326, 248, 4, 145),
-            new Rectangle2D.Double(326, 393, 4, 20),
-
-            // Hall / kitchen partitions. Open doorway spans are not blocked.
-            new Rectangle2D.Double(592, 247, 4, 78),
-            new Rectangle2D.Double(592, 325, 4, 62),
-            new Rectangle2D.Double(592, 247, 112, 4),
-            new Rectangle2D.Double(704, 247, 72, 4),
-            new Rectangle2D.Double(780, 247, 72, 4),
-            new Rectangle2D.Double(680, 276, 170, 4),
-            new Rectangle2D.Double(680, 276, 4, 80),
-            new Rectangle2D.Double(848, 276, 4, 80),
-
-            // Bathroom and lower-left room perimeter.
-            new Rectangle2D.Double(88, 438, 4, 116),
-            new Rectangle2D.Double(88, 438, 160, 4),
-            new Rectangle2D.Double(88, 554, 160, 4),
-            new Rectangle2D.Double(248, 438, 4, 116),
-
-            // Lower central side walls, leaving the marked door openings open.
-            new Rectangle2D.Double(255, 438, 4, 70),
-            new Rectangle2D.Double(255, 508, 4, 22),
-            new Rectangle2D.Double(255, 530, 4, 28),
-            new Rectangle2D.Double(590, 438, 4, 70),
-            new Rectangle2D.Double(590, 508, 4, 22),
-            new Rectangle2D.Double(590, 530, 4, 28),
-
-            // Bedroom perimeter and exit-side wall sections.
-            new Rectangle2D.Double(600, 438, 250, 4),
-            new Rectangle2D.Double(600, 438, 4, 116),
-            new Rectangle2D.Double(846, 438, 4, 116),
-            new Rectangle2D.Double(600, 554, 70, 4),
-            new Rectangle2D.Double(780, 554, 70, 4)
-        };
+    private Shape[] getAnnotatedWallShapes() {
+        return buildAnnotatedShapes(ANNOTATED_WALL_PATHS, 4.0f);
     }
 
-    // Green markers from the reference image are open doorways, not obstacles.
-    private Rectangle2D.Double[] getDoorwayGuides() {
-        return new Rectangle2D.Double[] {
-            new Rectangle2D.Double(306, 166, 22, 48),
-            new Rectangle2D.Double(574, 166, 22, 48),
-            new Rectangle2D.Double(318, 306, 20, 46),
-            new Rectangle2D.Double(584, 306, 20, 46),
-            new Rectangle2D.Double(286, 438, 30, 58),
-            new Rectangle2D.Double(604, 438, 30, 58),
-            new Rectangle2D.Double(410, 552, 80, 42)
-        };
+    private Shape[] getAnnotatedFurnitureShapes() {
+        return buildAnnotatedShapes(ANNOTATED_FURNITURE_PATHS, 4.0f);
     }
 
     private boolean collides(double x, double y, int size) {
@@ -670,11 +678,11 @@ class GameScreen extends JPanel {
         Rectangle2D.Double playerBox =
             new Rectangle2D.Double(x - size, y - size, size * 2.0, size * 2.0);
 
-        for (Rectangle2D.Double area : getBlockedAreas()) {
-            if (playerBox.intersects(area)) return true;
+        for (Shape wall : getAnnotatedWallShapes()) {
+            if (wall.intersects(playerBox)) return true;
         }
-        for (Rectangle2D.Double wall : getWallAreas()) {
-            if (playerBox.intersects(wall)) return true;
+        for (Shape furniture : getAnnotatedFurnitureShapes()) {
+            if (furniture.intersects(playerBox)) return true;
         }
         return false;
     }
@@ -1112,24 +1120,16 @@ class GameScreen extends JPanel {
     private void drawCollisionOverlay(Graphics2D g2) {
         Stroke oldStroke = g2.getStroke();
 
-        // Blue/cyan = furniture footprints.
-        g2.setStroke(new BasicStroke(0.8f));
-        g2.setColor(new Color(40, 190, 255, 220));
-        for (Rectangle2D.Double area : getBlockedAreas()) {
-            g2.draw(area);
-        }
-
-        // Red/orange = solid architectural walls.
+        // Draw the same traced polylines used by collision detection.
+        g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.setColor(new Color(255, 75, 45, 225));
-        for (Rectangle2D.Double wall : getWallAreas()) {
-            g2.draw(wall);
+        for (String encoded : ANNOTATED_WALL_PATHS) {
+            drawEncodedPath(g2, encoded);
         }
 
-        // Green = doorways/passages that intentionally remain walkable.
-        g2.setColor(new Color(80, 235, 105, 230));
-        g2.setStroke(new BasicStroke(1.1f));
-        for (Rectangle2D.Double doorway : getDoorwayGuides()) {
-            g2.draw(doorway);
+        g2.setColor(new Color(40, 190, 255, 230));
+        for (String encoded : ANNOTATED_FURNITURE_PATHS) {
+            drawEncodedPath(g2, encoded);
         }
 
         // Outer playable-map boundary.
@@ -1138,6 +1138,25 @@ class GameScreen extends JPanel {
             BasicStroke.JOIN_MITER, 10.0f, new float[]{4.0f, 4.0f}, 0.0f));
         g2.drawRect(6, 6, 888, 588);
         g2.setStroke(oldStroke);
+    }
+
+    private void drawEncodedPath(Graphics2D g2, String encoded) {
+        String[] points = encoded.trim().split("\\s+");
+        Path2D.Double path = new Path2D.Double();
+        boolean first = true;
+        for (String point : points) {
+            String[] xy = point.split(",");
+            double px = Double.parseDouble(xy[0]);
+            double py = Double.parseDouble(xy[1]);
+            if (first) {
+                path.moveTo(px, py);
+                first = false;
+            } else {
+                path.lineTo(px, py);
+            }
+        }
+        path.closePath();
+        g2.draw(path);
     }
 
     // ================= FLASHLIGHT =================
