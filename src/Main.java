@@ -689,32 +689,46 @@ class GameScreen extends JPanel {
             int rows = (600 + WALL_CELL_SIZE - 1) / WALL_CELL_SIZE;
             wallGrid = new boolean[rows][columns];
 
-            // Use only narrow, separate wall strips. Do not fill closed room polygons.
+            // Thin wall strips follow only the visible architectural partitions.
+            // Openings are deliberately left at each doorway.
             Rectangle2D.Double[] walls = {
-                new Rectangle2D.Double(28, 42, 7, 175),
-                new Rectangle2D.Double(28, 42, 275, 7),
-                new Rectangle2D.Double(28, 216, 105, 7),
-                new Rectangle2D.Double(210, 216, 105, 7),
-                new Rectangle2D.Double(28, 232, 7, 173),
-                new Rectangle2D.Double(28, 405, 110, 7),
-                new Rectangle2D.Double(225, 405, 92, 7),
-                new Rectangle2D.Double(315, 232, 7, 55),
-                new Rectangle2D.Double(315, 335, 7, 77),
-                new Rectangle2D.Double(85, 420, 7, 145),
-                new Rectangle2D.Double(85, 558, 165, 7),
-                new Rectangle2D.Double(245, 420, 7, 145),
-                new Rectangle2D.Double(320, 215, 7, 65),
-                new Rectangle2D.Double(320, 335, 7, 80),
-                new Rectangle2D.Double(575, 215, 7, 70),
-                new Rectangle2D.Double(575, 335, 7, 80),
-                new Rectangle2D.Double(585, 230, 7, 75),
-                new Rectangle2D.Double(585, 350, 7, 62),
-                new Rectangle2D.Double(590, 405, 125, 7),
-                new Rectangle2D.Double(790, 405, 90, 7),
-                new Rectangle2D.Double(875, 230, 7, 180),
-                new Rectangle2D.Double(585, 420, 7, 145),
-                new Rectangle2D.Double(585, 558, 285, 7),
-                new Rectangle2D.Double(870, 420, 7, 145)
+                // Library outer wall and its lower divider.
+                new Rectangle2D.Double(29, 42, 4, 174),
+                new Rectangle2D.Double(29, 42, 274, 4),
+                new Rectangle2D.Double(29, 216, 104, 4),
+                new Rectangle2D.Double(210, 216, 104, 4),
+
+                // Living-room left boundary and lower wall, with the hall opening.
+                new Rectangle2D.Double(29, 232, 4, 173),
+                new Rectangle2D.Double(29, 405, 108, 4),
+                new Rectangle2D.Double(225, 405, 89, 4),
+                new Rectangle2D.Double(315, 232, 4, 54),
+                new Rectangle2D.Double(315, 336, 4, 69),
+
+                // Bathroom perimeter; doorway at the top-right remains open.
+                new Rectangle2D.Double(85, 420, 4, 138),
+                new Rectangle2D.Double(85, 558, 164, 4),
+                new Rectangle2D.Double(245, 420, 4, 138),
+
+                // Left side of the central hall: short wall returns only.
+                new Rectangle2D.Double(320, 216, 4, 62),
+                new Rectangle2D.Double(320, 337, 4, 68),
+
+                // Right side of the central hall: short wall returns only.
+                new Rectangle2D.Double(575, 216, 4, 65),
+                new Rectangle2D.Double(575, 337, 4, 68),
+
+                // Dining / kitchen wing, leaving the door and passage gaps clear.
+                new Rectangle2D.Double(585, 232, 4, 70),
+                new Rectangle2D.Double(585, 350, 4, 55),
+                new Rectangle2D.Double(590, 405, 123, 4),
+                new Rectangle2D.Double(790, 405, 88, 4),
+                new Rectangle2D.Double(875, 232, 4, 173),
+
+                // Lower-right bedroom boundary and doorway opening.
+                new Rectangle2D.Double(585, 420, 4, 138),
+                new Rectangle2D.Double(585, 558, 284, 4),
+                new Rectangle2D.Double(870, 420, 4, 138)
             };
 
             for (int row = 0; row < rows; row++) {
