@@ -666,14 +666,14 @@ class GameScreen extends JPanel {
 
     private Shape[] getAnnotatedWallShapes() {
         if (cachedAnnotatedWallShapes == null) {
-            cachedAnnotatedWallShapes = buildAnnotatedShapes(ANNOTATED_WALL_PATHS, 4.0f);
+            cachedAnnotatedWallShapes = buildAnnotatedShapes(ANNOTATED_WALL_PATHS, 9.0f);
         }
         return cachedAnnotatedWallShapes;
     }
 
     private Shape[] getAnnotatedFurnitureShapes() {
         if (cachedAnnotatedFurnitureShapes == null) {
-            cachedAnnotatedFurnitureShapes = buildAnnotatedShapes(ANNOTATED_FURNITURE_PATHS, 4.0f);
+            cachedAnnotatedFurnitureShapes = buildAnnotatedShapes(ANNOTATED_FURNITURE_PATHS, 2.6f);
         }
         return cachedAnnotatedFurnitureShapes;
     }
@@ -692,6 +692,23 @@ class GameScreen extends JPanel {
         }
         for (Shape furniture : getAnnotatedFurnitureShapes()) {
             if (furniture.intersects(playerBox)) return true;
+        }
+        return false;
+    }
+
+    // Monster uses architectural walls only. It can squeeze around room furniture
+    // instead of becoming trapped against a sofa, counter, table or decorative prop.
+    private boolean monsterHitsWall(double x, double y, int size) {
+        if (x - size < 6 || y - size < 6 ||
+            x + size > 894 || y + size > 594) {
+            return true;
+        }
+
+        Rectangle2D.Double monsterBox =
+            new Rectangle2D.Double(x - size, y - size, size * 2.0, size * 2.0);
+
+        for (Shape wall : getAnnotatedWallShapes()) {
+            if (wall.intersects(monsterBox)) return true;
         }
         return false;
     }
@@ -746,7 +763,7 @@ class GameScreen extends JPanel {
 
             double nextX = monsterX + patrolDirection;
 
-            if (collides(nextX, monsterY, 12)) {
+            if (monsterHitsWall(nextX, monsterY, 9)) {
                 patrolDirection *= -1;
             } else {
                 monsterX = nextX;
@@ -759,11 +776,11 @@ class GameScreen extends JPanel {
 
     private void moveMonster(double dx, double dy) {
 
-        if (!collides(monsterX + dx, monsterY, 12)) {
+        if (!monsterHitsWall(monsterX + dx, monsterY, 9)) {
             monsterX += dx;
         }
 
-        if (!collides(monsterX, monsterY + dy, 12)) {
+        if (!monsterHitsWall(monsterX, monsterY + dy, 9)) {
             monsterY += dy;
         }
     }
@@ -1130,13 +1147,14 @@ class GameScreen extends JPanel {
         Stroke oldStroke = g2.getStroke();
 
         // Draw the same traced polylines used by collision detection.
-        g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(new Color(255, 75, 45, 225));
+        g2.setStroke(new BasicStroke(2.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(new Color(255, 75, 45, 235));
         for (String encoded : ANNOTATED_WALL_PATHS) {
             drawEncodedPath(g2, encoded);
         }
 
-        g2.setColor(new Color(40, 190, 255, 230));
+        g2.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(new Color(40, 190, 255, 210));
         for (String encoded : ANNOTATED_FURNITURE_PATHS) {
             drawEncodedPath(g2, encoded);
         }
