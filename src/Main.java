@@ -5,6 +5,10 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 public class Main {
 
@@ -27,10 +31,15 @@ public class Main {
 class MenuPanel extends JPanel {
 
     private final JFrame frame;
-    private float fogOffset = 0;
+    private BufferedImage backgroundImage;
 
     MenuPanel(JFrame frame) {
         this.frame = frame;
+        try {
+            backgroundImage = ImageIO.read(new File("assets/images/menu-background.jpg"));
+        } catch (IOException e) {
+            System.out.println("Could not load menu background: " + e.getMessage());
+        }
         setLayout(new GridBagLayout());
         setOpaque(true);
 
@@ -130,54 +139,40 @@ class MenuPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                            RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+                            RenderingHints.VALUE_RENDER_QUALITY);
 
         int w = getWidth();
         int h = getHeight();
 
-        g2.setPaint(new GradientPaint(0, 0, new Color(8, 9, 14),
-                                      0, h, new Color(35, 18, 20)));
-        g2.fillRect(0, 0, w, h);
-
-        // Distant moon and its soft halo
-        g2.setColor(new Color(210, 198, 170, 18));
-        g2.fillOval(w - 285, 65, 190, 190);
-        g2.setColor(new Color(220, 211, 188, 210));
-        g2.fillOval(w - 235, 115, 90, 90);
-
-        // Low mist along the ground
-        for (int i = 0; i < 7; i++) {
-            int y = (int)(h * 0.70) + i * 24;
-            g2.setColor(new Color(145, 130, 130, 10 + i));
-            g2.fillOval(-80 + i * 55, y, w + 180, 55);
+        if (backgroundImage != null) {
+            // Scale to fill the window without distorting the photograph.
+            double scale = Math.max(
+                (double) w / backgroundImage.getWidth(),
+                (double) h / backgroundImage.getHeight()
+            );
+            int drawW = (int) (backgroundImage.getWidth() * scale);
+            int drawH = (int) (backgroundImage.getHeight() * scale);
+            int x = (w - drawW) / 2;
+            int y = (h - drawH) / 2;
+            g2.drawImage(backgroundImage, x, y, drawW, drawH, this);
+        } else {
+            g2.setPaint(new GradientPaint(0, 0, new Color(8, 9, 14),
+                                          0, h, new Color(35, 18, 20)));
+            g2.fillRect(0, 0, w, h);
         }
 
-        // Silhouette of the abandoned house
-        int baseY = (int)(h * 0.79);
-        g2.setColor(new Color(8, 8, 11));
-        int[] hx = {w/2 - 390, w/2 - 270, w/2 - 210, w/2 - 90,
-                    w/2 + 30, w/2 + 145, w/2 + 260, w/2 + 390};
-        int[] hy = {baseY, baseY - 150, baseY - 115, baseY - 255,
-                    baseY - 170, baseY - 230, baseY - 125, baseY};
-        g2.fillPolygon(hx, hy, hx.length);
-        g2.fillRect(w/2 - 390, baseY - 5, 780, h - baseY + 10);
+        // Dark cinematic overlay keeps the menu readable.
+        g2.setColor(new Color(0, 0, 0, 125));
+        g2.fillRect(0, 0, w, h);
 
-        // Windows with a faint, unsettling glow
-        g2.setColor(new Color(120, 42, 27, 100));
-        g2.fillRect(w/2 - 245, baseY - 105, 38, 58);
-        g2.fillRect(w/2 + 170, baseY - 125, 42, 62);
-        g2.setColor(new Color(20, 12, 13));
-        g2.drawLine(w/2 - 226, baseY - 105, w/2 - 226, baseY - 47);
-        g2.drawLine(w/2 - 245, baseY - 76, w/2 - 207, baseY - 76);
-        g2.drawLine(w/2 + 191, baseY - 125, w/2 + 191, baseY - 63);
-        g2.drawLine(w/2 + 170, baseY - 94, w/2 + 212, baseY - 94);
-
-        // Vignette
+        // Gentle vignette around the edges.
         g2.setPaint(new RadialGradientPaint(
             new Point(w / 2, h / 2), Math.max(w, h) * 0.72f,
             new float[]{0.35f, 1.0f},
-            new Color[]{new Color(0, 0, 0, 0), new Color(0, 0, 0, 185)}
+            new Color[]{new Color(0, 0, 0, 0), new Color(0, 0, 0, 115)}
         ));
         g2.fillRect(0, 0, w, h);
         g2.dispose();
