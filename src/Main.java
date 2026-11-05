@@ -579,6 +579,88 @@ class GameScreen extends JPanel {
         };
     }
 
+    // Red-marked architectural boundaries from the user's annotated floor plan.
+    // Door gaps are deliberately omitted so the green-marked passages stay open.
+    private Rectangle2D.Double[] getWallAreas() {
+        return new Rectangle2D.Double[] {
+            // Library outer walls and lower partition.
+            new Rectangle2D.Double(62, 66, 248, 4),
+            new Rectangle2D.Double(62, 66, 4, 139),
+            new Rectangle2D.Double(62, 205, 4, 2),
+            new Rectangle2D.Double(62, 205, 245, 4),
+            new Rectangle2D.Double(306, 66, 4, 105),
+            new Rectangle2D.Double(306, 66, 4, 105),
+
+            // Central stair hall side walls; keep the foyer opening clear.
+            new Rectangle2D.Double(326, 62, 4, 104),
+            new Rectangle2D.Double(326, 62, 4, 104),
+            new Rectangle2D.Double(574, 62, 4, 105),
+            new Rectangle2D.Double(574, 62, 4, 105),
+
+            // Dining room perimeter and fireplace wall.
+            new Rectangle2D.Double(594, 67, 254, 4),
+            new Rectangle2D.Double(594, 67, 4, 98),
+            new Rectangle2D.Double(844, 67, 4, 98),
+            new Rectangle2D.Double(594, 141, 254, 4),
+            new Rectangle2D.Double(594, 141, 4, 22),
+
+            // Living room: left wall, fireplace wall and lower partition.
+            new Rectangle2D.Double(28, 245, 4, 152),
+            new Rectangle2D.Double(28, 245, 290, 4),
+            new Rectangle2D.Double(28, 397, 290, 4),
+            new Rectangle2D.Double(28, 397, 4, 18),
+            new Rectangle2D.Double(28, 415, 4, 18),
+
+            // Living room right boundary; doorway gap retained near foyer.
+            new Rectangle2D.Double(326, 248, 4, 145),
+            new Rectangle2D.Double(326, 393, 4, 20),
+
+            // Hall / kitchen partitions. Open doorway spans are not blocked.
+            new Rectangle2D.Double(592, 247, 4, 78),
+            new Rectangle2D.Double(592, 325, 4, 62),
+            new Rectangle2D.Double(592, 247, 112, 4),
+            new Rectangle2D.Double(704, 247, 72, 4),
+            new Rectangle2D.Double(780, 247, 72, 4),
+            new Rectangle2D.Double(680, 276, 170, 4),
+            new Rectangle2D.Double(680, 276, 4, 80),
+            new Rectangle2D.Double(848, 276, 4, 80),
+
+            // Bathroom and lower-left room perimeter.
+            new Rectangle2D.Double(88, 438, 4, 116),
+            new Rectangle2D.Double(88, 438, 160, 4),
+            new Rectangle2D.Double(88, 554, 160, 4),
+            new Rectangle2D.Double(248, 438, 4, 116),
+
+            // Lower central side walls, leaving the marked door openings open.
+            new Rectangle2D.Double(255, 438, 4, 70),
+            new Rectangle2D.Double(255, 508, 4, 22),
+            new Rectangle2D.Double(255, 530, 4, 28),
+            new Rectangle2D.Double(590, 438, 4, 70),
+            new Rectangle2D.Double(590, 508, 4, 22),
+            new Rectangle2D.Double(590, 530, 4, 28),
+
+            // Bedroom perimeter and exit-side wall sections.
+            new Rectangle2D.Double(600, 438, 250, 4),
+            new Rectangle2D.Double(600, 438, 4, 116),
+            new Rectangle2D.Double(846, 438, 4, 116),
+            new Rectangle2D.Double(600, 554, 70, 4),
+            new Rectangle2D.Double(780, 554, 70, 4)
+        };
+    }
+
+    // Green markers from the reference image are open doorways, not obstacles.
+    private Rectangle2D.Double[] getDoorwayGuides() {
+        return new Rectangle2D.Double[] {
+            new Rectangle2D.Double(306, 166, 22, 48),
+            new Rectangle2D.Double(574, 166, 22, 48),
+            new Rectangle2D.Double(318, 306, 20, 46),
+            new Rectangle2D.Double(584, 306, 20, 46),
+            new Rectangle2D.Double(286, 438, 30, 58),
+            new Rectangle2D.Double(604, 438, 30, 58),
+            new Rectangle2D.Double(410, 552, 80, 42)
+        };
+    }
+
     private boolean collides(double x, double y, int size) {
         if (x - size < 6 || y - size < 6 ||
             x + size > 894 || y + size > 594) {
@@ -590,6 +672,9 @@ class GameScreen extends JPanel {
 
         for (Rectangle2D.Double area : getBlockedAreas()) {
             if (playerBox.intersects(area)) return true;
+        }
+        for (Rectangle2D.Double wall : getWallAreas()) {
+            if (playerBox.intersects(wall)) return true;
         }
         return false;
     }
@@ -1027,11 +1112,24 @@ class GameScreen extends JPanel {
     private void drawCollisionOverlay(Graphics2D g2) {
         Stroke oldStroke = g2.getStroke();
 
-        // Very thin outlines hug only the blocked footprint.
-        g2.setStroke(new BasicStroke(0.65f));
-        g2.setColor(new Color(40, 225, 245, 210));
+        // Blue/cyan = furniture footprints.
+        g2.setStroke(new BasicStroke(0.8f));
+        g2.setColor(new Color(40, 190, 255, 220));
         for (Rectangle2D.Double area : getBlockedAreas()) {
             g2.draw(area);
+        }
+
+        // Red/orange = solid architectural walls.
+        g2.setColor(new Color(255, 75, 45, 225));
+        for (Rectangle2D.Double wall : getWallAreas()) {
+            g2.draw(wall);
+        }
+
+        // Green = doorways/passages that intentionally remain walkable.
+        g2.setColor(new Color(80, 235, 105, 230));
+        g2.setStroke(new BasicStroke(1.1f));
+        for (Rectangle2D.Double doorway : getDoorwayGuides()) {
+            g2.draw(doorway);
         }
 
         // Outer playable-map boundary.
