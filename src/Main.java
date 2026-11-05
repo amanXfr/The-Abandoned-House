@@ -858,31 +858,74 @@ class GameScreen extends JPanel {
             RenderingHints.VALUE_ANTIALIAS_ON
         );
 
-        // House floor and walls
+        // ================= ATMOSPHERIC HOUSE ENVIRONMENT =================
+        // Draw a worn wooden floor with subtle variation in every tile.
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
-
                 int x = c * TILE;
                 int y = r * TILE;
+                boolean wall = map[r][c] == '#';
 
-                if (map[r][c] == '#') {
-
-                    g2.setColor(new Color(35, 32, 33));
+                if (wall) {
+                    // Dark, uneven stone/plaster wall blocks.
+                    int shade = 29 + Math.floorMod(r * 13 + c * 7, 9);
+                    g2.setPaint(new GradientPaint(
+                        x, y, new Color(shade + 9, shade + 5, shade + 5),
+                        x, y + TILE, new Color(shade - 5, shade - 7, shade - 5)
+                    ));
                     g2.fillRect(x, y, TILE, TILE);
 
-                    g2.setColor(new Color(65, 55, 55));
-                    g2.drawRect(x, y, TILE, TILE);
+                    g2.setColor(new Color(93, 77, 72, 90));
+                    g2.drawLine(x + 2, y + 5, x + TILE - 3, y + 5);
+                    g2.setColor(new Color(8, 7, 9, 170));
+                    g2.drawLine(x, y + TILE - 1, x + TILE, y + TILE - 1);
+                    g2.drawLine(x + TILE - 1, y, x + TILE - 1, y + TILE);
 
+                    // Small chipped plaster marks.
+                    if ((r * 3 + c * 5) % 7 == 0) {
+                        g2.setColor(new Color(12, 10, 11, 150));
+                        g2.drawLine(x + 7, y + 12, x + 12, y + 17);
+                        g2.drawLine(x + 12, y + 17, x + 10, y + 23);
+                    }
                 } else {
-
-                    g2.setColor(new Color(65, 54, 48));
+                    // Old wooden floorboards with muted brown variation.
+                    int variation = Math.floorMod(r * 17 + c * 11, 13);
+                    int red = 57 + variation;
+                    int green = 43 + variation / 2;
+                    int blue = 35 + variation / 3;
+                    g2.setColor(new Color(red, green, blue));
                     g2.fillRect(x, y, TILE, TILE);
 
-                    g2.setColor(new Color(75, 63, 55));
-                    g2.drawRect(x, y, TILE, TILE);
+                    g2.setColor(new Color(20, 14, 12, 125));
+                    g2.drawLine(x + 2, y + 10, x + TILE - 2, y + 10);
+                    g2.drawLine(x + 2, y + 21, x + TILE - 2, y + 21);
+
+                    // Alternating plank seams.
+                    g2.setColor(new Color(18, 13, 11, 150));
+                    int seamX = ((r + c) % 2 == 0) ? x + 14 : x + 25;
+                    g2.drawLine(seamX, y + 1, seamX, y + TILE - 1);
+
+                    // Occasional scratches and dark floor stains.
+                    if ((r * 7 + c * 3) % 11 == 0) {
+                        g2.setColor(new Color(18, 12, 10, 115));
+                        g2.drawLine(x + 5, y + 16, x + 12, y + 14);
+                        g2.drawLine(x + 12, y + 14, x + 18, y + 17);
+                    }
+                    if ((r * 5 + c * 9) % 17 == 0) {
+                        g2.setColor(new Color(22, 12, 10, 65));
+                        g2.fillOval(x + 8, y + 5, 13, 8);
+                    }
                 }
             }
         }
+
+        // A subtle dark edge makes the rooms feel less brightly lit.
+        g2.setPaint(new RadialGradientPaint(
+            new Point(450, 300), 590,
+            new float[]{0.25f, 1.0f},
+            new Color[]{new Color(0, 0, 0, 0), new Color(0, 0, 0, 95)}
+        ));
+        g2.fillRect(0, 0, 900, 600);
 
         drawDoor(g2);
         drawKey(g2);
