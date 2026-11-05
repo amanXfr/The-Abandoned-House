@@ -1171,26 +1171,31 @@ class GameScreen extends JPanel {
     // ================= COLLISION DEBUG OVERLAY =================
 
     private void drawCollisionOverlay(Graphics2D g2) {
+        boolean[][] grid = getWallGrid();
         Stroke oldStroke = g2.getStroke();
 
-        // Fill the exact buffered wall shapes, so every blocking wall is a
-        // visible solid rectangular/strip footprint rather than a hairline.
-        g2.setColor(new Color(255, 72, 42, 185));
-        for (Shape wall : getAnnotatedWallShapes()) {
-            g2.fill(wall);
+        // Show every occupied 8x8 collision cell as a small translucent square.
+        g2.setColor(new Color(255, 75, 45, 105));
+        for (int row = 0; row < grid.length; row++) {
+            for (int col = 0; col < grid[row].length; col++) {
+                if (grid[row][col]) {
+                    g2.fillRect(col * WALL_CELL_SIZE, row * WALL_CELL_SIZE,
+                                WALL_CELL_SIZE, WALL_CELL_SIZE);
+                }
+            }
         }
 
-        // Furniture stays a fine outline so it does not obscure the artwork.
-        g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(new Color(40, 190, 255, 225));
-        for (String encoded : ANNOTATED_FURNITURE_PATHS) {
-            drawEncodedPath(g2, encoded);
+        // Fine cell grid makes the individual joined squares easy to inspect.
+        g2.setColor(new Color(255, 190, 150, 125));
+        g2.setStroke(new BasicStroke(0.45f));
+        for (int row = 0; row < grid.length; row++) {
+            for (int col = 0; col < grid[row].length; col++) {
+                if (grid[row][col]) {
+                    g2.drawRect(col * WALL_CELL_SIZE, row * WALL_CELL_SIZE,
+                                WALL_CELL_SIZE, WALL_CELL_SIZE);
+                }
+            }
         }
-
-        g2.setColor(new Color(255, 220, 70, 170));
-        g2.setStroke(new BasicStroke(0.8f, BasicStroke.CAP_BUTT,
-            BasicStroke.JOIN_MITER, 10.0f, new float[]{4.0f, 4.0f}, 0.0f));
-        g2.drawRect(6, 6, 888, 588);
         g2.setStroke(oldStroke);
     }
 
@@ -1319,6 +1324,7 @@ class GameScreen extends JPanel {
             g2.drawString("Villa map missing: assets/images/villa-map.jpg", 250, 300);
         }
 
+        drawCollisionOverlay(g2);
         drawDoor(g2);
         drawKey(g2);
         drawMonster(g2);
