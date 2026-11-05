@@ -631,6 +631,169 @@ class GameScreen extends JPanel {
         repaint();
     }
 
+    // ================= LUXURY VILLA FURNITURE =================
+
+    private void drawVillaFurniture(Graphics2D g2) {
+        // Grand foyer runner and central floral table.
+        g2.setColor(new Color(75, 19, 25));
+        g2.fillRoundRect(350, 185, 200, 190, 12, 12);
+        g2.setColor(new Color(190, 145, 82));
+        g2.setStroke(new BasicStroke(3));
+        g2.drawRoundRect(357, 192, 186, 176, 9, 9);
+        g2.setStroke(new BasicStroke(1));
+        g2.setColor(new Color(90, 48, 29));
+        g2.fillOval(405, 245, 90, 65);
+        g2.setColor(new Color(170, 119, 65));
+        g2.drawOval(405, 245, 90, 65);
+        g2.setColor(new Color(66, 105, 54));
+        g2.fillOval(438, 258, 25, 25);
+        g2.setColor(new Color(205, 170, 190));
+        g2.fillOval(444, 253, 10, 10);
+        g2.fillOval(432, 264, 10, 10);
+        g2.fillOval(451, 267, 10, 10);
+
+        // Library shelves and writing desk (upper-left room).
+        drawCabinet(g2, 45, 48, 225, 42);
+        drawCabinet(g2, 45, 96, 225, 42);
+        g2.setColor(new Color(64, 35, 24));
+        g2.fillRoundRect(105, 190, 135, 48, 5, 5);
+        g2.setColor(new Color(145, 101, 57));
+        g2.drawRect(112, 196, 121, 34);
+        g2.setColor(new Color(110, 25, 29));
+        g2.fillRoundRect(150, 150, 48, 38, 8, 8);
+        g2.setColor(new Color(190, 145, 85));
+        g2.drawRoundRect(150, 150, 48, 38, 8, 8);
+
+        // Lounge: fireplace, coffee table and two sofas (middle-left).
+        g2.setColor(new Color(75, 42, 29));
+        g2.fillRect(65, 330, 105, 20);
+        g2.setColor(new Color(145, 104, 69));
+        g2.drawRect(70, 334, 95, 13);
+        g2.setColor(new Color(255, 125, 35));
+        g2.fillOval(95, 333, 28, 13);
+        g2.setColor(new Color(255, 205, 90));
+        g2.fillOval(104, 333, 10, 10);
+        drawSofa(g2, 60, 420, 72, 38);
+        drawSofa(g2, 205, 420, 72, 38);
+        g2.setColor(new Color(80, 43, 28));
+        g2.fillRoundRect(135, 435, 65, 34, 7, 7);
+        g2.setColor(new Color(173, 130, 79));
+        g2.drawRoundRect(135, 435, 65, 34, 7, 7);
+
+        // Dining room: long polished table and six chairs (upper-right).
+        g2.setColor(new Color(91, 48, 29));
+        g2.fillRoundRect(665, 135, 150, 72, 8, 8);
+        g2.setColor(new Color(190, 143, 82));
+        g2.drawRoundRect(670, 140, 140, 62, 6, 6);
+        for (int i = 0; i < 3; i++) {
+            drawChair(g2, 680 + i * 48, 112);
+            drawChair(g2, 680 + i * 48, 210);
+        }
+        g2.setColor(new Color(58, 95, 48));
+        g2.fillOval(730, 158, 18, 18);
+        g2.setColor(new Color(190, 55, 65));
+        g2.fillOval(736, 154, 9, 9);
+
+        // Kitchen counters and island (middle-right).
+        drawCabinet(g2, 635, 330, 235, 38);
+        drawCabinet(g2, 635, 375, 235, 38);
+        g2.setColor(new Color(35, 35, 37));
+        g2.fillRoundRect(690, 425, 120, 58, 7, 7);
+        g2.setColor(new Color(155, 155, 150));
+        g2.drawRoundRect(695, 430, 110, 48, 5, 5);
+        g2.setColor(new Color(20, 20, 22));
+        for (int i = 0; i < 4; i++) g2.fillOval(708 + (i % 2) * 42, 439 + (i / 2) * 20, 13, 13);
+
+        // Lower-left bathroom: tiled bath and vanity.
+        g2.setColor(new Color(105, 111, 112));
+        g2.fillRoundRect(48, 505, 105, 48, 20, 20);
+        g2.setColor(new Color(205, 207, 198));
+        g2.drawRoundRect(52, 509, 97, 39, 18, 18);
+        g2.setColor(new Color(70, 110, 125));
+        g2.fillRoundRect(61, 516, 80, 25, 14, 14);
+        g2.setColor(new Color(150, 145, 132));
+        g2.fillOval(205, 510, 38, 28);
+        g2.setColor(new Color(220, 210, 190));
+        g2.drawOval(209, 514, 30, 20);
+
+        // Lower-right bedroom: large bed, headboard and bedside tables.
+        g2.setColor(new Color(67, 37, 27));
+        g2.fillRoundRect(690, 490, 145, 78, 8, 8);
+        g2.setColor(new Color(130, 88, 55));
+        g2.drawRoundRect(695, 495, 135, 68, 6, 6);
+        g2.setColor(new Color(190, 164, 125));
+        g2.fillRoundRect(705, 505, 115, 55, 8, 8);
+        g2.setColor(new Color(235, 220, 190));
+        g2.fillRoundRect(715, 510, 42, 20, 7, 7);
+        g2.fillRoundRect(768, 510, 42, 20, 7, 7);
+        g2.setColor(new Color(75, 42, 27));
+        g2.fillRect(660, 510, 25, 35);
+        g2.fillRect(840, 510, 25, 35);
+        g2.setColor(new Color(220, 175, 90));
+        g2.fillOval(669, 518, 7, 7);
+        g2.fillOval(849, 518, 7, 7);
+
+        // Indoor plants around the foyer.
+        drawPlant(g2, 315, 255);
+        drawPlant(g2, 570, 255);
+        drawPlant(g2, 315, 465);
+        drawPlant(g2, 570, 465);
+
+        // Grand staircase at the north end of the foyer.
+        g2.setColor(new Color(72, 35, 25));
+        g2.fillRect(360, 0, 180, 75);
+        for (int y = 8; y < 72; y += 13) {
+            g2.setColor(new Color(155, 112, 68));
+            g2.fillRect(365, y, 170, 4);
+            g2.setColor(new Color(45, 25, 20));
+            g2.drawLine(365, y + 5, 535, y + 5);
+        }
+        g2.setColor(new Color(190, 145, 80));
+        g2.drawLine(355, 5, 355, 76);
+        g2.drawLine(545, 5, 545, 76);
+    }
+
+    private void drawCabinet(Graphics2D g2, int x, int y, int w, int h) {
+        g2.setColor(new Color(65, 35, 24));
+        g2.fillRoundRect(x, y, w, h, 5, 5);
+        g2.setColor(new Color(151, 105, 59));
+        g2.drawRoundRect(x + 3, y + 3, w - 6, h - 6, 4, 4);
+        for (int i = 1; i < 7; i++) {
+            int bx = x + i * w / 7;
+            g2.setColor(new Color(105, 62, 35));
+            g2.drawLine(bx, y + 5, bx, y + h - 5);
+            g2.setColor(new Color(170, 125, 68));
+            g2.fillRect(bx + 2, y + 8, 3, Math.max(8, h - 17));
+        }
+    }
+
+    private void drawSofa(Graphics2D g2, int x, int y, int w, int h) {
+        g2.setColor(new Color(88, 30, 34));
+        g2.fillRoundRect(x, y, w, h, 12, 12);
+        g2.setColor(new Color(170, 112, 75));
+        g2.drawRoundRect(x + 3, y + 3, w - 6, h - 6, 10, 10);
+        g2.setColor(new Color(125, 60, 57));
+        g2.fillRoundRect(x + 8, y + 7, w - 16, h - 14, 8, 8);
+    }
+
+    private void drawChair(Graphics2D g2, int x, int y) {
+        g2.setColor(new Color(70, 31, 29));
+        g2.fillRoundRect(x, y, 28, 20, 6, 6);
+        g2.setColor(new Color(174, 119, 68));
+        g2.drawRoundRect(x + 2, y + 2, 24, 16, 5, 5);
+    }
+
+    private void drawPlant(Graphics2D g2, int x, int y) {
+        g2.setColor(new Color(105, 57, 34));
+        g2.fillRoundRect(x - 10, y + 12, 22, 18, 5, 5);
+        g2.setColor(new Color(43, 86, 43));
+        g2.fillOval(x - 15, y - 8, 20, 24);
+        g2.fillOval(x - 3, y - 15, 21, 25);
+        g2.fillOval(x - 7, y - 2, 22, 20);
+        g2.setColor(new Color(85, 125, 63));
+        g2.drawLine(x, y + 15, x + 2, y - 8);
+    }
+
     // ================= GOLDEN KEY =================
 
     private void drawKey(Graphics2D g2) {
@@ -932,6 +1095,7 @@ class GameScreen extends JPanel {
         ));
         g2.fillRect(0, 0, 900, 600);
 
+        drawVillaFurniture(g2);
         drawDoor(g2);
         drawKey(g2);
         drawMonster(g2);
