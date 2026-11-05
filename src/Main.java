@@ -191,7 +191,7 @@ class GameScreen extends JPanel {
 
     // Player
     private double playerX = 450;
-    private double playerY = 320;
+    private double playerY = 470;
 
     private final double PLAYER_SPEED = 3.0;
 
@@ -211,8 +211,8 @@ class GameScreen extends JPanel {
     private boolean hasKey = false;
     private boolean keyCollected = false;
 
-    private final double keyX = 150;
-    private final double keyY = 140;
+    private final double keyX = 450;
+    private final double keyY = 405;
 
     // Monster
     private double monsterX = 750;
@@ -481,7 +481,7 @@ class GameScreen extends JPanel {
                 else returnToMenu();
 
             } else {
-                message = "The exit is locked! Find the golden key.";
+                message = "The main exit is locked! Find the golden key.";
             }
 
             return;
@@ -540,10 +540,9 @@ class GameScreen extends JPanel {
         int top = (int) (y - size);
         int bottom = (int) (y + size);
 
-        return isWall(left, top) ||
-               isWall(right, top) ||
-               isWall(left, bottom) ||
-               isWall(right, bottom);
+        // The villa is currently a single illustrated background.
+        // Use screen bounds for movement until room-specific collision zones are added.
+        return left < 6 || top < 6 || right > 894 || bottom > 594;
     }
 
     private boolean isWall(int x, int y) {
@@ -837,15 +836,17 @@ class GameScreen extends JPanel {
 
         if (keyCollected) return;
 
+        int x = (int) keyX;
+        int y = (int) keyY;
+
+        // Draw the key exactly where the interaction check expects it.
         g2.setColor(new Color(255, 210, 50));
-        g2.fillOval(383, 308, 14, 14);
-
+        g2.fillOval(x - 7, y - 7, 14, 14);
+        g2.setColor(new Color(255, 238, 150));
         g2.setStroke(new BasicStroke(3));
-
-        g2.drawLine(390, 315, 404, 315);
-        g2.drawLine(400, 315, 400, 321);
-        g2.drawLine(404, 315, 404, 320);
-
+        g2.drawLine(x + 4, y, x + 17, y);
+        g2.drawLine(x + 12, y, x + 12, y + 6);
+        g2.drawLine(x + 17, y, x + 17, y + 5);
         g2.setStroke(new BasicStroke(1));
     }
 
