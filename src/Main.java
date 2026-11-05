@@ -215,7 +215,13 @@ class GameScreen extends JPanel {
     // Temporary in-game wall editor. Drawn walls are saved locally in assets/custom-wall-layout.txt.
     private JButton drawWallsButton;
     private JButton undoWallButton;
+    private JButton eraseWallsButton;
+    private JButton smallerCubeButton;
+    private JButton largerCubeButton;
+    private JButton cubeSizeButton;
     private boolean wallDrawMode = false;
+    private boolean wallEraseMode = false;
+    private boolean eraseDragging = false;
     private final ArrayList<String> customWallPathData = new ArrayList<>();
     private final ArrayList<Shape> customWallShapes = new ArrayList<>();
     private Path2D.Double currentWallPath;
@@ -299,8 +305,42 @@ class GameScreen extends JPanel {
         });
         add(drawWallsButton);
 
-        // Remove the most recently drawn wall if you make a mistake.
-        undoWallButton = new JButton("UNDO WALL");
+        eraseWallsButton = new JButton("ERASER: OFF");
+        styleToolButton(eraseWallsButton);
+        eraseWallsButton.setToolTipText("Turn on, then left-drag over a wall stroke to erase it");
+        eraseWallsButton.addActionListener(e -> {
+            wallEraseMode = !wallEraseMode;
+            if (wallEraseMode) {
+                wallDrawMode = false;
+                drawWallsButton.setText("DRAW WALLS: OFF");
+                drawWallsButton.setBackground(new Color(55, 42, 25));
+            }
+            eraseWallsButton.setText(wallEraseMode ? "ERASER: ON" : "ERASER: OFF");
+            eraseWallsButton.setBackground(wallEraseMode
+                ? new Color(125, 48, 35) : new Color(55, 42, 25));
+            requestFocusInWindow();
+            repaint();
+        });
+        add(eraseWallsButton);
+
+        smallerCubeButton = new JButton("CUBE -");
+        styleToolButton(smallerCubeButton);
+        smallerCubeButton.setToolTipText("Decrease collision square size");
+        smallerCubeButton.addActionListener(e -> changeWallCellSize(-2));
+        add(smallerCubeButton);
+
+        cubeSizeButton = new JButton("CUBE: " + wallCellSize);
+        styleToolButton(cubeSizeButton);
+        cubeSizeButton.setEnabled(false);
+        add(cubeSizeButton);
+
+        largerCubeButton = new JButton("CUBE +");
+        styleToolButton(largerCubeButton);
+        largerCubeButton.setToolTipText("Increase collision square size");
+        largerCubeButton.addActionListener(e -> changeWallCellSize(2));
+        add(largerCubeButton);
+
+        undoWallButton = new JButton("UNDO");
         styleToolButton(undoWallButton);
         undoWallButton.addActionListener(e -> undoLastCustomWall());
         add(undoWallButton);
@@ -324,15 +364,14 @@ class GameScreen extends JPanel {
     @Override
     public void doLayout() {
         super.doLayout();
-        if (brightnessButton != null) {
-            brightnessButton.setBounds(Math.max(12, getWidth() - 190), 52, 178, 34);
-        }
-        if (drawWallsButton != null) {
-            drawWallsButton.setBounds(Math.max(12, getWidth() - 376), 52, 178, 34);
-        }
-        if (undoWallButton != null) {
-            undoWallButton.setBounds(Math.max(12, getWidth() - 562), 52, 178, 34);
-        }
+        int right = getWidth() - 10;
+        if (brightnessButton != null) brightnessButton.setBounds(right - 145, 52, 145, 34);
+        if (drawWallsButton != null) drawWallsButton.setBounds(right - 295, 52, 145, 34);
+        if (eraseWallsButton != null) eraseWallsButton.setBounds(right - 415, 52, 115, 34);
+        if (largerCubeButton != null) largerCubeButton.setBounds(right - 495, 52, 75, 34);
+        if (cubeSizeButton != null) cubeSizeButton.setBounds(right - 565, 52, 65, 34);
+        if (smallerCubeButton != null) smallerCubeButton.setBounds(right - 640, 52, 70, 34);
+        if (undoWallButton != null) undoWallButton.setBounds(right - 715, 52, 70, 34);
     }
 
     // ================= HOUSE MAP =================
@@ -724,13 +763,13 @@ class GameScreen extends JPanel {
 
     // Wall collision is stored as a grid of small joined square cells.
     // The cells are invisible: they only define where characters can walk.
-    private static final int WALL_CELL_SIZE = 8;
+    private int wallCellSize = 8;
     private boolean[][] wallGrid;
 
     private boolean[][] getWallGrid() {
         if (wallGrid == null) {
-            int columns = (900 + WALL_CELL_SIZE - 1) / WALL_CELL_SIZE;
-            int rows = (600 + WALL_CELL_SIZE - 1) / WALL_CELL_SIZE;
+            int columns = (900 + wallCellSize - 1) / wallCellSize;
+            int rows = (600 + wallCellSize - 1) / wallCellSize;
             wallGrid = new boolean[rows][columns];
 
             ArrayList<Shape> activeWalls = new ArrayList<>(customWallShapes);
@@ -743,8 +782,8 @@ class GameScreen extends JPanel {
             for (int row = 0; row < rows; row++) {
                 for (int col = 0; col < columns; col++) {
                     Rectangle2D cell = new Rectangle2D.Double(
-                        col * WALL_CELL_SIZE, row * WALL_CELL_SIZE,
-                        WALL_CELL_SIZE, WALL_CELL_SIZE);
+                        col * wallCellSize, row * wallCellSize,
+                        wallCellSize, wallCellSize);
                     for (Shape wall : activeWalls) {
                         if (wall.intersects(cell)) {
                             wallGrid[row][col] = true;
@@ -762,12 +801,12 @@ class GameScreen extends JPanel {
             x + size > 894 || y + size > 594) return true;
 
         boolean[][] grid = getWallGrid();
-        int minCol = Math.max(0, (int) Math.floor((x - size) / WALL_CELL_SIZE));
+        int minCol = Math.max(0, (int) Math.floor((x - size) / wallCellSize));
         int maxCol = Math.min(grid[0].length - 1,
-            (int) Math.floor((x + size) / WALL_CELL_SIZE));
-        int minRow = Math.max(0, (int) Math.floor((y - size) / WALL_CELL_SIZE));
+            (int) Math.floor((x + size) / wallCellSize));
+        int minRow = Math.max(0, (int) Math.floor((y - size) / wallCellSize));
         int maxRow = Math.min(grid.length - 1,
-            (int) Math.floor((y + size) / WALL_CELL_SIZE));
+            (int) Math.floor((y + size) / wallCellSize));
 
         for (int row = minRow; row <= maxRow; row++) {
             for (int col = minCol; col <= maxCol; col++) {
@@ -1225,8 +1264,8 @@ class GameScreen extends JPanel {
         for (int row = 0; row < grid.length; row++) {
             for (int col = 0; col < grid[row].length; col++) {
                 if (grid[row][col]) {
-                    g2.fillRect(col * WALL_CELL_SIZE, row * WALL_CELL_SIZE,
-                                WALL_CELL_SIZE, WALL_CELL_SIZE);
+                    g2.fillRect(col * wallCellSize, row * wallCellSize,
+                                wallCellSize, wallCellSize);
                 }
             }
         }
@@ -1236,20 +1275,55 @@ class GameScreen extends JPanel {
         for (int row = 0; row < grid.length; row++) {
             for (int col = 0; col < grid[row].length; col++) {
                 if (grid[row][col]) {
-                    g2.drawRect(col * WALL_CELL_SIZE, row * WALL_CELL_SIZE,
-                                WALL_CELL_SIZE, WALL_CELL_SIZE);
+                    g2.drawRect(col * wallCellSize, row * wallCellSize,
+                                wallCellSize, wallCellSize);
                 }
             }
         }
 
-        if (wallDrawMode) {
+        if (wallDrawMode || wallEraseMode) {
             g2.setColor(new Color(255, 245, 210));
             g2.setFont(new Font("Arial", Font.BOLD, 12));
-            g2.drawString("DRAW MODE: LEFT-DRAG TO TRACE WALLS  |  UNDO WALL TO REMOVE LAST", 18, 82);
+            String hint = wallEraseMode
+                ? "ERASER MODE: LEFT-DRAG OVER A CUSTOM WALL STROKE"
+                : "DRAW MODE: LEFT-DRAG TO DRAW WALLS";
+            g2.drawString(hint + "  |  CUBE SIZE: " + wallCellSize + " PX", 18, 82);
         }
         g2.setStroke(oldStroke);
     }
 
+
+    private void changeWallCellSize(int delta) {
+        wallCellSize = Math.max(4, Math.min(24, wallCellSize + delta));
+        cubeSizeButton.setText("CUBE: " + wallCellSize);
+        wallGrid = null;
+        message = "Collision square size: " + wallCellSize + " px";
+        repaint();
+        requestFocusInWindow();
+    }
+
+    // Erase the complete drawn wall stroke when the brush touches it.
+    private void eraseCustomWallsAt(Point2D.Double point) {
+        double radius = Math.max(7, wallCellSize * 1.15);
+        Rectangle2D brush = new Rectangle2D.Double(
+            point.x - radius, point.y - radius, radius * 2, radius * 2);
+        boolean removed = false;
+
+        for (int i = customWallShapes.size() - 1; i >= 0; i--) {
+            if (customWallShapes.get(i).intersects(brush)) {
+                customWallShapes.remove(i);
+                customWallPathData.remove(i);
+                removed = true;
+            }
+        }
+
+        if (removed) {
+            wallGrid = null;
+            saveCustomWallLayout();
+            message = "Wall stroke erased.";
+            repaint();
+        }
+    }
 
     private void styleToolButton(JButton button) {
         button.setFont(new Font("Arial", Font.BOLD, 11));
@@ -1273,9 +1347,16 @@ class GameScreen extends JPanel {
         MouseAdapter drawingAdapter = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent event) {
-                if (!wallDrawMode || !SwingUtilities.isLeftMouseButton(event)) return;
+                if (!SwingUtilities.isLeftMouseButton(event)) return;
                 Point2D.Double point = mouseToMapPoint(event);
-                if (point.y < 42) return; // Keep the title/toolbar area clear.
+                if (point.y < 42) return;
+
+                if (wallEraseMode) {
+                    eraseDragging = true;
+                    eraseCustomWallsAt(point);
+                    return;
+                }
+                if (!wallDrawMode) return;
 
                 currentWallPath = new Path2D.Double();
                 currentWallPath.moveTo(point.x, point.y);
@@ -1287,11 +1368,15 @@ class GameScreen extends JPanel {
 
             @Override
             public void mouseDragged(MouseEvent event) {
-                if (!wallDrawMode || currentWallPath == null ||
-                    (event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == 0) return;
-
+                if ((event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == 0) return;
                 Point2D.Double point = mouseToMapPoint(event);
                 if (point.y < 42) return;
+
+                if (wallEraseMode && eraseDragging) {
+                    eraseCustomWallsAt(point);
+                    return;
+                }
+                if (!wallDrawMode || currentWallPath == null) return;
 
                 currentWallPath.lineTo(point.x, point.y);
                 currentWallData.append(" ")
@@ -1302,6 +1387,7 @@ class GameScreen extends JPanel {
 
             @Override
             public void mouseReleased(MouseEvent event) {
+                eraseDragging = false;
                 if (currentWallPath == null) return;
 
                 if (currentWallData != null && currentWallData.indexOf(" ") >= 0) {
