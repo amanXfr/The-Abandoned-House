@@ -535,14 +535,90 @@ class GameScreen extends JPanel {
 
     private boolean collides(double x, double y, int size) {
 
-        int left = (int) (x - size);
-        int right = (int) (x + size);
-        int top = (int) (y - size);
-        int bottom = (int) (y + size);
+        // Keep the player inside the villa image.
+        if (x - size < 6 || y - size < 6 ||
+            x + size > 894 || y + size > 594) {
+            return true;
+        }
 
-        // The villa is currently a single illustrated background.
-        // Use screen bounds for movement until room-specific collision zones are added.
-        return left < 6 || top < 6 || right > 894 || bottom > 594;
+        // Collision boxes are authored in the 900 x 600 map coordinate space.
+        // They cover the large solid walls and furniture, leaving doorways and
+        // the main corridors open. Small decorative objects remain walkable.
+        Rectangle2D.Double[] solidAreas = {
+            // Library: bookcases, desk, chair and globe.
+            new Rectangle2D.Double(42, 48, 235, 92),
+            new Rectangle2D.Double(112, 190, 132, 48),
+            new Rectangle2D.Double(145, 150, 58, 40),
+            new Rectangle2D.Double(43, 235, 34, 48),
+
+            // Grand staircase and foyer centre table.
+            new Rectangle2D.Double(340, 0, 220, 82),
+            new Rectangle2D.Double(405, 245, 92, 72),
+
+            // Dining room table and chairs.
+            new Rectangle2D.Double(625, 128, 205, 112),
+
+            // Living room fireplace, coffee table and sofas.
+            new Rectangle2D.Double(45, 258, 260, 92),
+            new Rectangle2D.Double(142, 360, 112, 68),
+            new Rectangle2D.Double(78, 405, 62, 48),
+            new Rectangle2D.Double(230, 405, 62, 48),
+
+            // Kitchen counters, cooker and island.
+            new Rectangle2D.Double(655, 270, 215, 72),
+            new Rectangle2D.Double(700, 372, 125, 62),
+
+            // Bathroom: vanity, bath and toilet.
+            new Rectangle2D.Double(68, 432, 175, 65),
+            new Rectangle2D.Double(95, 505, 100, 52),
+            new Rectangle2D.Double(205, 505, 45, 38),
+
+            // Bedroom: wardrobe, bed and bedside cabinets.
+            new Rectangle2D.Double(680, 445, 72, 105),
+            new Rectangle2D.Double(755, 455, 115, 112),
+            new Rectangle2D.Double(650, 475, 30, 55),
+            new Rectangle2D.Double(865, 475, 25, 55),
+
+            // Decorative planters beside the central hall.
+            new Rectangle2D.Double(298, 270, 28, 35),
+            new Rectangle2D.Double(574, 270, 28, 35),
+            new Rectangle2D.Double(298, 455, 28, 35),
+            new Rectangle2D.Double(574, 455, 28, 35)
+        };
+
+        Rectangle2D.Double playerBox =
+            new Rectangle2D.Double(x - size, y - size, size * 2.0, size * 2.0);
+
+        for (Rectangle2D.Double area : solidAreas) {
+            if (playerBox.intersects(area)) return true;
+        }
+
+        // Main villa room walls. Each segment stops before its doorway opening.
+        Rectangle2D.Double[] wallAreas = {
+            // Left wing upper/lower boundaries.
+            new Rectangle2D.Double(25, 215, 8, 25),
+            new Rectangle2D.Double(25, 240, 8, 120),
+            new Rectangle2D.Double(25, 360, 8, 28),
+            new Rectangle2D.Double(25, 388, 8, 125),
+            new Rectangle2D.Double(25, 513, 8, 70),
+
+            // Right wing room partitions, preserving the central door gaps.
+            new Rectangle2D.Double(590, 235, 9, 110),
+            new Rectangle2D.Double(590, 345, 9, 38),
+            new Rectangle2D.Double(590, 383, 9, 130),
+
+            // Lower bedroom and bathroom partition walls.
+            new Rectangle2D.Double(80, 420, 240, 8),
+            new Rectangle2D.Double(80, 420, 8, 25),
+            new Rectangle2D.Double(250, 420, 70, 8),
+            new Rectangle2D.Double(610, 420, 270, 8)
+        };
+
+        for (Rectangle2D.Double wall : wallAreas) {
+            if (playerBox.intersects(wall)) return true;
+        }
+
+        return false;
     }
 
     private boolean isWall(int x, int y) {
