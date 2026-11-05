@@ -536,46 +536,46 @@ class GameScreen extends JPanel {
     // One source of truth for collision and the visible developer outlines.
     private Rectangle2D.Double[] getBlockedAreas() {
         return new Rectangle2D.Double[] {
-            // Library bookcases, desk and reading chair.
-            new Rectangle2D.Double(92, 52, 190, 78),
-            new Rectangle2D.Double(145, 132, 95, 42),
-            new Rectangle2D.Double(168, 111, 42, 25),
-            new Rectangle2D.Double(70, 158, 22, 34),
+            // Library: tight footprints around the bookcase, desk and chair.
+            new Rectangle2D.Double(96, 55, 184, 68),
+            new Rectangle2D.Double(150, 136, 86, 34),
+            new Rectangle2D.Double(171, 113, 36, 21),
+            new Rectangle2D.Double(73, 164, 17, 25),
 
-            // Staircase rails / solid stair structure (keep the lower landing open).
-            new Rectangle2D.Double(340, 42, 42, 110),
-            new Rectangle2D.Double(518, 42, 42, 110),
+            // Staircase side posts only; leave the stair treads and landing open.
+            new Rectangle2D.Double(352, 58, 17, 82),
+            new Rectangle2D.Double(531, 58, 17, 82),
 
-            // Foyer centre table and plants.
-            new Rectangle2D.Double(414, 245, 75, 66),
-            new Rectangle2D.Double(330, 270, 20, 28),
-            new Rectangle2D.Double(550, 270, 20, 28),
-            new Rectangle2D.Double(330, 455, 20, 28),
-            new Rectangle2D.Double(550, 455, 20, 28),
+            // Foyer centre table and nearby planters.
+            new Rectangle2D.Double(420, 252, 64, 55),
+            new Rectangle2D.Double(333, 276, 15, 21),
+            new Rectangle2D.Double(553, 276, 15, 21),
+            new Rectangle2D.Double(333, 460, 15, 21),
+            new Rectangle2D.Double(553, 460, 15, 21),
 
-            // Dining table and chairs as a compact footprint.
-            new Rectangle2D.Double(630, 132, 190, 92),
+            // Dining table and chair footprint, leaving the room entrance clear.
+            new Rectangle2D.Double(650, 145, 165, 70),
 
-            // Living room fireplace, coffee table and sofas.
-            new Rectangle2D.Double(92, 245, 205, 34),
-            new Rectangle2D.Double(145, 356, 105, 43),
-            new Rectangle2D.Double(95, 335, 42, 58),
-            new Rectangle2D.Double(235, 335, 42, 58),
+            // Living room fireplace surround, coffee table and sofas.
+            new Rectangle2D.Double(105, 250, 180, 25),
+            new Rectangle2D.Double(151, 361, 93, 34),
+            new Rectangle2D.Double(99, 341, 34, 47),
+            new Rectangle2D.Double(239, 341, 34, 47),
 
-            // Kitchen back counter and island. Doorway at left remains clear.
-            new Rectangle2D.Double(685, 270, 175, 48),
-            new Rectangle2D.Double(725, 360, 95, 34),
+            // Kitchen back counter and island; doorway on the left stays open.
+            new Rectangle2D.Double(692, 276, 160, 38),
+            new Rectangle2D.Double(731, 365, 83, 27),
 
             // Bathroom vanity, bath and toilet.
-            new Rectangle2D.Double(100, 445, 135, 38),
-            new Rectangle2D.Double(108, 515, 72, 30),
-            new Rectangle2D.Double(220, 505, 22, 30),
+            new Rectangle2D.Double(112, 451, 112, 28),
+            new Rectangle2D.Double(112, 520, 65, 23),
+            new Rectangle2D.Double(224, 511, 16, 20),
 
             // Bedroom wardrobe, bed and bedside tables.
-            new Rectangle2D.Double(680, 455, 48, 68),
-            new Rectangle2D.Double(755, 465, 105, 82),
-            new Rectangle2D.Double(655, 485, 18, 35),
-            new Rectangle2D.Double(865, 485, 18, 35)
+            new Rectangle2D.Double(687, 463, 37, 55),
+            new Rectangle2D.Double(761, 472, 94, 70),
+            new Rectangle2D.Double(658, 490, 13, 27),
+            new Rectangle2D.Double(867, 490, 13, 27)
         };
     }
 
@@ -1028,7 +1028,7 @@ class GameScreen extends JPanel {
         Stroke oldStroke = g2.getStroke();
 
         // Very thin outlines hug only the blocked footprint.
-        g2.setStroke(new BasicStroke(0.8f));
+        g2.setStroke(new BasicStroke(0.65f));
         g2.setColor(new Color(40, 225, 245, 210));
         for (Rectangle2D.Double area : getBlockedAreas()) {
             g2.draw(area);
