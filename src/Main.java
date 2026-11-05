@@ -255,46 +255,51 @@ class GameScreen extends JPanel {
 
     private void createMap() {
 
+        // Start with an open floor and build the villa's room layout.
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
-
-                map[r][c] = '.';
-
-                if (r == 0 || r == ROWS - 1 ||
-                    c == 0 || c == COLS - 1) {
-                    map[r][c] = '#';
-                }
+                map[r][c] = (r == 0 || r == ROWS - 1 || c == 0 || c == COLS - 1) ? '#' : '.';
             }
         }
 
-        for (int c = 2; c < 13; c++) {
-            if (c != 7) map[6][c] = '#';
+        // Main room dividers: library / living room on the left,
+        // grand foyer in the middle, dining room / kitchen on the right.
+        for (int r = 1; r < 19; r++) {
+            if (r != 5 && r != 14) map[r][10] = '#';
+            if (r != 5 && r != 14) map[r][19] = '#';
         }
 
-        for (int r = 2; r < 16; r++) {
-            if (r != 10) map[r][15] = '#';
+        // Left wing: library above, lounge below.
+        for (int c = 1; c < 10; c++) {
+            if (c != 5) map[9][c] = '#';
         }
 
-        for (int c = 16; c < 28; c++) {
-            if (c != 22) map[13][c] = '#';
+        // Right wing: dining room above, kitchen below.
+        for (int c = 20; c < 29; c++) {
+            if (c != 24) map[9][c] = '#';
         }
 
-        for (int r = 8; r < 18; r++) {
-            if (r != 12) map[r][8] = '#';
+        // Lower private rooms, connected to the central hall.
+        for (int c = 1; c < 10; c++) {
+            if (c != 5) map[15][c] = '#';
+        }
+        for (int c = 20; c < 29; c++) {
+            if (c != 24) map[15][c] = '#';
         }
 
-        map[3][4] = '#';
-        map[3][5] = '#';
-        map[4][4] = '#';
+        // Bathroom / utility room divider in the lower-left wing.
+        for (int r = 16; r < 19; r++) {
+            if (r != 17) map[r][5] = '#';
+        }
 
-        map[9][19] = '#';
-        map[9][20] = '#';
-
-        map[16][23] = '#';
-        map[16][24] = '#';
-
-        // Exit door
+        // Keep the main exit at the end of the grand foyer.
         map[18][15] = 'D';
+
+        // Decorative grand staircase boundary at the north end of the foyer.
+        // The middle opening remains walkable.
+        for (int c = 12; c <= 17; c++) {
+            if (c != 14 && c != 15) map[2][c] = '#';
+        }
     }
 
     // ================= KEYBOARD CONTROLS =================
