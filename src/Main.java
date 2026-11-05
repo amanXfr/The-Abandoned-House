@@ -297,6 +297,11 @@ class GameScreen extends JPanel {
         drawWallsButton.setToolTipText("Enable, then left-drag on the villa to draw blocking walls");
         drawWallsButton.addActionListener(e -> {
             wallDrawMode = !wallDrawMode;
+            if (wallDrawMode) {
+                wallEraseMode = false;
+                eraseWallsButton.setText("ERASER: OFF");
+                eraseWallsButton.setBackground(new Color(55, 42, 25));
+            }
             drawWallsButton.setText(wallDrawMode ? "DRAW WALLS: ON" : "DRAW WALLS: OFF");
             drawWallsButton.setBackground(wallDrawMode
                 ? new Color(125, 48, 35) : new Color(55, 42, 25));
@@ -307,7 +312,7 @@ class GameScreen extends JPanel {
 
         eraseWallsButton = new JButton("ERASER: OFF");
         styleToolButton(eraseWallsButton);
-        eraseWallsButton.setToolTipText("Turn on, then left-drag over a wall stroke to erase it");
+        eraseWallsButton.setToolTipText("Turn on, then left-drag over a custom wall to erase the entire stroke");
         eraseWallsButton.addActionListener(e -> {
             wallEraseMode = !wallEraseMode;
             if (wallEraseMode) {
@@ -1285,7 +1290,7 @@ class GameScreen extends JPanel {
             g2.setColor(new Color(255, 245, 210));
             g2.setFont(new Font("Arial", Font.BOLD, 12));
             String hint = wallEraseMode
-                ? "ERASER MODE: LEFT-DRAG OVER A CUSTOM WALL STROKE"
+                ? "ERASER MODE: LEFT-DRAG OVER A WALL TO REMOVE THAT STROKE"
                 : "DRAW MODE: LEFT-DRAG TO DRAW WALLS";
             g2.drawString(hint + "  |  CUBE SIZE: " + wallCellSize + " PX", 18, 82);
         }
