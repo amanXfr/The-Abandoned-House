@@ -689,17 +689,40 @@ class GameScreen extends JPanel {
             int rows = (600 + WALL_CELL_SIZE - 1) / WALL_CELL_SIZE;
             wallGrid = new boolean[rows][columns];
 
-            Shape[] wallShapes = getAnnotatedWallShapes();
+            // Use only narrow, separate wall strips. Do not fill closed room polygons.
+            Rectangle2D.Double[] walls = {
+                new Rectangle2D.Double(28, 42, 7, 175),
+                new Rectangle2D.Double(28, 42, 275, 7),
+                new Rectangle2D.Double(28, 216, 105, 7),
+                new Rectangle2D.Double(210, 216, 105, 7),
+                new Rectangle2D.Double(28, 232, 7, 173),
+                new Rectangle2D.Double(28, 405, 110, 7),
+                new Rectangle2D.Double(225, 405, 92, 7),
+                new Rectangle2D.Double(315, 232, 7, 55),
+                new Rectangle2D.Double(315, 335, 7, 77),
+                new Rectangle2D.Double(85, 420, 7, 145),
+                new Rectangle2D.Double(85, 558, 165, 7),
+                new Rectangle2D.Double(245, 420, 7, 145),
+                new Rectangle2D.Double(320, 215, 7, 65),
+                new Rectangle2D.Double(320, 335, 7, 80),
+                new Rectangle2D.Double(575, 215, 7, 70),
+                new Rectangle2D.Double(575, 335, 7, 80),
+                new Rectangle2D.Double(585, 230, 7, 75),
+                new Rectangle2D.Double(585, 350, 7, 62),
+                new Rectangle2D.Double(590, 405, 125, 7),
+                new Rectangle2D.Double(790, 405, 90, 7),
+                new Rectangle2D.Double(875, 230, 7, 180),
+                new Rectangle2D.Double(585, 420, 7, 145),
+                new Rectangle2D.Double(585, 558, 285, 7),
+                new Rectangle2D.Double(870, 420, 7, 145)
+            };
+
             for (int row = 0; row < rows; row++) {
                 for (int col = 0; col < columns; col++) {
                     Rectangle2D cell = new Rectangle2D.Double(
-                        col * WALL_CELL_SIZE,
-                        row * WALL_CELL_SIZE,
-                        WALL_CELL_SIZE,
-                        WALL_CELL_SIZE
-                    );
-
-                    for (Shape wall : wallShapes) {
+                        col * WALL_CELL_SIZE, row * WALL_CELL_SIZE,
+                        WALL_CELL_SIZE, WALL_CELL_SIZE);
+                    for (Rectangle2D.Double wall : walls) {
                         if (wall.intersects(cell)) {
                             wallGrid[row][col] = true;
                             break;
