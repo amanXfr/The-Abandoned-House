@@ -27,23 +27,30 @@ public class Main {
 class MenuPanel extends JPanel {
 
     private final JFrame frame;
+    private float fogOffset = 0;
 
     MenuPanel(JFrame frame) {
         this.frame = frame;
         setLayout(new GridBagLayout());
+        setOpaque(true);
 
         JPanel menu = new JPanel();
         menu.setOpaque(false);
         menu.setLayout(new BoxLayout(menu, BoxLayout.Y_AXIS));
 
+        JLabel eyebrow = new JLabel("A PLACE YOU SHOULD NEVER HAVE ENTERED");
+        eyebrow.setFont(new Font("Arial", Font.BOLD, 12));
+        eyebrow.setForeground(new Color(190, 160, 145));
+        eyebrow.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         JLabel title = new JLabel("THE ABANDONED HOUSE");
-        title.setFont(new Font("Serif", Font.BOLD, 46));
-        title.setForeground(new Color(190, 25, 25));
+        title.setFont(new Font("Serif", Font.BOLD, 48));
+        title.setForeground(new Color(224, 218, 207));
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel subtitle = new JLabel("A HORROR ESCAPE GAME");
-        subtitle.setFont(new Font("Arial", Font.PLAIN, 17));
-        subtitle.setForeground(Color.LIGHT_GRAY);
+        JLabel subtitle = new JLabel("SOME DOORS ARE BETTER LEFT CLOSED");
+        subtitle.setFont(new Font("Arial", Font.PLAIN, 14));
+        subtitle.setForeground(new Color(180, 165, 160));
         subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JButton start = createButton("NEW GAME");
@@ -51,45 +58,65 @@ class MenuPanel extends JPanel {
         JButton exit = createButton("EXIT");
 
         start.addActionListener(e -> openGame());
-
         instructions.addActionListener(e ->
             JOptionPane.showMessageDialog(
                 frame,
-                "WASD / ARROW KEYS - MOVE\n" +
-                "F - FLASHLIGHT\n" +
-                "E - INTERACT\n\n" +
-                "Find the golden key and escape.\n" +
-                "Avoid the monster!",
+                "WASD / ARROW KEYS  -  MOVE\\n" +
+                "F  -  TOGGLE FLASHLIGHT\\n" +
+                "E  -  INTERACT\\n" +
+                "ESC  -  RETURN TO MENU\\n\\n" +
+                "Find the golden key, avoid the monster, and escape.",
                 "HOW TO PLAY",
                 JOptionPane.INFORMATION_MESSAGE
             )
         );
-
         exit.addActionListener(e -> System.exit(0));
 
+        menu.add(eyebrow);
+        menu.add(Box.createVerticalStrut(12));
         menu.add(title);
-        menu.add(Box.createVerticalStrut(15));
+        menu.add(Box.createVerticalStrut(10));
         menu.add(subtitle);
-        menu.add(Box.createVerticalStrut(55));
+        menu.add(Box.createVerticalStrut(42));
         menu.add(start);
-        menu.add(Box.createVerticalStrut(15));
+        menu.add(Box.createVerticalStrut(12));
         menu.add(instructions);
-        menu.add(Box.createVerticalStrut(15));
+        menu.add(Box.createVerticalStrut(12));
         menu.add(exit);
 
         add(menu);
     }
 
     private JButton createButton(String text) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Arial", Font.BOLD, 17));
-        b.setForeground(Color.WHITE);
-        b.setBackground(new Color(80, 10, 10));
+        JButton b = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                    RenderingHints.VALUE_ANTIALIAS_ON);
+                boolean hover = getModel().isRollover();
+                g2.setColor(hover ? new Color(112, 31, 30, 245)
+                                  : new Color(35, 20, 22, 225));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(hover ? new Color(220, 145, 115)
+                                  : new Color(125, 76, 68));
+                g2.setStroke(new BasicStroke(1.2f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        b.setFont(new Font("Arial", Font.BOLD, 15));
+        b.setForeground(new Color(238, 230, 222));
+        b.setOpaque(false);
+        b.setContentAreaFilled(false);
+        b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setAlignmentX(Component.CENTER_ALIGNMENT);
-        b.setMaximumSize(new Dimension(230, 48));
-        b.setPreferredSize(new Dimension(230, 48));
+        b.setMaximumSize(new Dimension(260, 48));
+        b.setPreferredSize(new Dimension(260, 48));
         b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        b.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         return b;
     }
 
@@ -102,30 +129,57 @@ class MenuPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
         Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
 
-        g2.setPaint(new GradientPaint(
-            0, 0, new Color(5, 5, 15),
-            0, getHeight(), new Color(35, 15, 18)
+        int w = getWidth();
+        int h = getHeight();
+
+        g2.setPaint(new GradientPaint(0, 0, new Color(8, 9, 14),
+                                      0, h, new Color(35, 18, 20)));
+        g2.fillRect(0, 0, w, h);
+
+        // Distant moon and its soft halo
+        g2.setColor(new Color(210, 198, 170, 18));
+        g2.fillOval(w - 285, 65, 190, 190);
+        g2.setColor(new Color(220, 211, 188, 210));
+        g2.fillOval(w - 235, 115, 90, 90);
+
+        // Low mist along the ground
+        for (int i = 0; i < 7; i++) {
+            int y = (int)(h * 0.70) + i * 24;
+            g2.setColor(new Color(145, 130, 130, 10 + i));
+            g2.fillOval(-80 + i * 55, y, w + 180, 55);
+        }
+
+        // Silhouette of the abandoned house
+        int baseY = (int)(h * 0.79);
+        g2.setColor(new Color(8, 8, 11));
+        int[] hx = {w/2 - 390, w/2 - 270, w/2 - 210, w/2 - 90,
+                    w/2 + 30, w/2 + 145, w/2 + 260, w/2 + 390};
+        int[] hy = {baseY, baseY - 150, baseY - 115, baseY - 255,
+                    baseY - 170, baseY - 230, baseY - 125, baseY};
+        g2.fillPolygon(hx, hy, hx.length);
+        g2.fillRect(w/2 - 390, baseY - 5, 780, h - baseY + 10);
+
+        // Windows with a faint, unsettling glow
+        g2.setColor(new Color(120, 42, 27, 100));
+        g2.fillRect(w/2 - 245, baseY - 105, 38, 58);
+        g2.fillRect(w/2 + 170, baseY - 125, 42, 62);
+        g2.setColor(new Color(20, 12, 13));
+        g2.drawLine(w/2 - 226, baseY - 105, w/2 - 226, baseY - 47);
+        g2.drawLine(w/2 - 245, baseY - 76, w/2 - 207, baseY - 76);
+        g2.drawLine(w/2 + 191, baseY - 125, w/2 + 191, baseY - 63);
+        g2.drawLine(w/2 + 170, baseY - 94, w/2 + 212, baseY - 94);
+
+        // Vignette
+        g2.setPaint(new RadialGradientPaint(
+            new Point(w / 2, h / 2), Math.max(w, h) * 0.72f,
+            new float[]{0.35f, 1.0f},
+            new Color[]{new Color(0, 0, 0, 0), new Color(0, 0, 0, 185)}
         ));
-
-        g2.fillRect(0, 0, getWidth(), getHeight());
-
-        g2.setColor(new Color(210, 205, 180));
-        g2.fillOval(getWidth() - 210, 55, 90, 90);
-
-        g2.setColor(new Color(12, 10, 14));
-
-        int[] x = {180, 320, 390, 470, 600, 730, 730, 180};
-        int[] y = {290, 180, 250, 150, 250, 290, 530, 530};
-
-        g2.fillPolygon(x, y, x.length);
-
-        g2.setColor(new Color(145, 30, 15));
-        g2.fillRect(250, 330, 55, 75);
-        g2.fillRect(590, 330, 55, 75);
-
+        g2.fillRect(0, 0, w, h);
         g2.dispose();
     }
 }
