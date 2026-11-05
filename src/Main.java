@@ -3,6 +3,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.awt.image.BufferedImage;
@@ -235,6 +236,8 @@ class GameScreen extends JPanel {
     private Timer gameTimer;
     private Timer scareTimer;
     private BufferedImage villaMapImage;
+    private Shape[] cachedAnnotatedWallShapes;
+    private Shape[] cachedAnnotatedFurnitureShapes;
 
     GameScreen(JFrame frame) {
         this.frame = frame;
@@ -662,11 +665,17 @@ class GameScreen extends JPanel {
     }
 
     private Shape[] getAnnotatedWallShapes() {
-        return buildAnnotatedShapes(ANNOTATED_WALL_PATHS, 4.0f);
+        if (cachedAnnotatedWallShapes == null) {
+            cachedAnnotatedWallShapes = buildAnnotatedShapes(ANNOTATED_WALL_PATHS, 4.0f);
+        }
+        return cachedAnnotatedWallShapes;
     }
 
     private Shape[] getAnnotatedFurnitureShapes() {
-        return buildAnnotatedShapes(ANNOTATED_FURNITURE_PATHS, 4.0f);
+        if (cachedAnnotatedFurnitureShapes == null) {
+            cachedAnnotatedFurnitureShapes = buildAnnotatedShapes(ANNOTATED_FURNITURE_PATHS, 4.0f);
+        }
+        return cachedAnnotatedFurnitureShapes;
     }
 
     private boolean collides(double x, double y, int size) {
