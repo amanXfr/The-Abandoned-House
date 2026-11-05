@@ -728,61 +728,66 @@ class GameScreen extends JPanel {
     // ================= MONSTER AI =================
 
     private void updateMonster() {
-
         if (gameOver || gameWon) return;
 
-        double distance = Math.hypot(
-            playerX - monsterX,
-            playerY - monsterY
-        );
-
-        if (distance < 280) {
-            monsterChasing = true;
-        }
-
-        if (distance > 390) {
-            monsterChasing = false;
-        }
+        double distance = Math.hypot(playerX - monsterX, playerY - monsterY);
+        if (distance < 280) monsterChasing = true;
+        if (distance > 390) monsterChasing = false;
 
         if (monsterChasing) {
-
-            double dx = playerX - monsterX;
-            double dy = playerY - monsterY;
-
-            double length = Math.hypot(dx, dy);
-
-            if (length > 0) {
-
-                dx = dx / length * monsterSpeed;
-                dy = dy / length * monsterSpeed;
-
-                moveMonster(dx, dy);
-            }
-
+            moveMonsterTowardPlayer();
         } else {
-
             double nextX = monsterX + patrolDirection;
-
-            if (monsterHitsWall(nextX, monsterY, 9)) {
+            if (collides(nextX, monsterY, 10)) {
                 patrolDirection *= -1;
-            } else {
-                monsterX = nextX;
+                // Try the opposite patrol direction immediately.
+                nextX = monsterX + patrolDirection;
             }
-
+            if (!collides(nextX, monsterY, 10)) monsterX = nextX;
             if (monsterX > 840) patrolDirection = -1;
             if (monsterX < 760) patrolDirection = 1;
         }
     }
 
+    // Try the direct route first, then progressively wider angles around
+    // furniture. Both walls and furniture remain solid to the monster.
+    private void moveMonsterTowardPlayer() {
+        double baseAngle = Math.atan2(playerY - monsterY, playerX - monsterX);
+        double[] offsets = {0, 0.45, -0.45, 0.85, -0.85, 1.25, -1.25,
+                            1.7, -1.7, 2.2, -2.2, Math.PI};
+        double bestScore = Double.POSITIVE_INFINITY;
+        double bestX = monsterX;
+        double bestY = monsterY;
+
+        for (double offset : offsets) {
+            double angle = baseAngle + offset;
+            double candidateX = monsterX + Math.cos(angle) * monsterSpeed;
+            double candidateY = monsterY + Math.sin(angle) * monsterSpeed;
+
+            // Test diagonal movement as a complete step to avoid corner cutting.
+            if (collides(candidateX, candidateY, 10)) continue;
+
+            double score = Math.hypot(playerX - candidateX, playerY - candidateY)
+                         + Math.abs(offset) * 7.0;
+            if (score < bestScore) {
+                bestScore = score;
+                bestX = candidateX;
+                bestY = candidateY;
+            }
+        }
+
+        if (bestScore < Double.POSITIVE_INFINITY) {
+            monsterX = bestX;
+            monsterY = bestY;
+        }
+    }
+
     private void moveMonster(double dx, double dy) {
-
-        if (!monsterHitsWall(monsterX + dx, monsterY, 9)) {
-            monsterX += dx;
-        }
-
-        if (!monsterHitsWall(monsterX, monsterY + dy, 9)) {
-            monsterY += dy;
-        }
+        // Retained for compatibility with any other movement calls.
+        double candidateX = monsterX + dx;
+        double candidateY = monsterY + dy;
+        if (!collides(candidateX, monsterY, 10)) monsterX = candidateX;
+        if (!collides(monsterX, candidateY, 10)) monsterY = candidateY;
     }
 
     // ================= JUMPSCARE =================
@@ -1146,20 +1151,20 @@ class GameScreen extends JPanel {
     private void drawCollisionOverlay(Graphics2D g2) {
         Stroke oldStroke = g2.getStroke();
 
-        // Draw the same traced polylines used by collision detection.
-        g2.setStroke(new BasicStroke(2.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(new Color(255, 75, 45, 235));
-        for (String encoded : ANNOTATED_WALL_PATHS) {
-            drawEncodedPath(g2, encoded);
+        // Fill the exact buffered wall shapes, so every blocking wall is a
+        // visible solid rectangular/strip footprint rather than a hairline.
+        g2.setColor(new Color(255, 72, 42, 185));
+        for (Shape wall : getAnnotatedWallShapes()) {
+            g2.fill(wall);
         }
 
-        g2.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(new Color(40, 190, 255, 210));
+        // Furniture stays a fine outline so it does not obscure the artwork.
+        g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(new Color(40, 190, 255, 225));
         for (String encoded : ANNOTATED_FURNITURE_PATHS) {
             drawEncodedPath(g2, encoded);
         }
 
-        // Outer playable-map boundary.
         g2.setColor(new Color(255, 220, 70, 170));
         g2.setStroke(new BasicStroke(0.8f, BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER, 10.0f, new float[]{4.0f, 4.0f}, 0.0f));
